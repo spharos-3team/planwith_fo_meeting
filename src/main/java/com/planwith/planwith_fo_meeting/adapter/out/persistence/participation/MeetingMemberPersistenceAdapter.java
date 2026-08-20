@@ -1,5 +1,8 @@
 package com.planwith.planwith_fo_meeting.adapter.out.persistence.participation;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
@@ -40,6 +43,31 @@ public class MeetingMemberPersistenceAdapter implements MeetingMemberRepositoryP
 		entity.setJoinAt(member.getJoinAt());
 		entity.setJoinedAt(member.getJoinedAt());
 		MeetingMemberJpaEntity saved = meetingMemberJpaRepository.save(entity);
+		return toDomain(saved);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Optional<MeetingMember> findByMeetingIdAndMemberUuid(Long meetingId, UUID memberUuid) {
+		return meetingMemberJpaRepository
+				.findByMeeting_MeetingIdAndMemberUuid(meetingId, memberUuid.toString())
+				.map(this::toDomain);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<MeetingMember> findByMeetingIdsAndMemberUuid(Collection<Long> meetingIds, UUID memberUuid) {
+		if (meetingIds == null || meetingIds.isEmpty()) {
+			return List.of();
+		}
+		return meetingMemberJpaRepository
+				.findByMeeting_MeetingIdInAndMemberUuid(meetingIds, memberUuid.toString())
+				.stream()
+				.map(this::toDomain)
+				.toList();
+	}
+
+	private MeetingMember toDomain(MeetingMemberJpaEntity saved) {
 		return new MeetingMember(
 				saved.getMeeting().getMeetingId(),
 				UUID.fromString(saved.getMemberUuid()),

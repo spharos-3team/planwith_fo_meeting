@@ -3,11 +3,15 @@ package com.planwith.planwith_fo_meeting.adapter.out.persistence.meeting;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.planwith.planwith_fo_meeting.application.port.out.MeetingPage;
 import com.planwith.planwith_fo_meeting.application.port.out.MeetingRepositoryPort;
 import com.planwith.planwith_fo_meeting.domain.meeting.Meeting;
+import com.planwith.planwith_fo_meeting.domain.meeting.MeetingStatus;
 import com.planwith.planwith_fo_meeting.domain.meeting.ScheduleSnapshot;
 
 @Component
@@ -46,6 +50,21 @@ public class MeetingPersistenceAdapter implements MeetingRepositoryPort {
 	@Transactional(readOnly = true)
 	public Optional<Meeting> findByMeetingUuid(UUID meetingUuid) {
 		return meetingJpaRepository.findByMeetingUuid(meetingUuid.toString()).map(this::toDomain);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public MeetingPage searchPublic(MeetingStatus status, int page, int size) {
+		int safePage = Math.max(page, 0);
+		int safeSize = Math.min(Math.max(size, 1), 50);
+		Page<MeetingJpaEntity> result = meetingJpaRepository.searchPublic(status, PageRequest.of(safePage, safeSize));
+		return new MeetingPage(
+				result.getContent().stream().map(this::toDomain).toList(),
+				result.getNumber(),
+				result.getSize(),
+				result.getTotalElements(),
+				result.getTotalPages()
+		);
 	}
 
 	private Meeting toDomain(MeetingJpaEntity entity) {
