@@ -4,12 +4,8 @@
 # 1) routes  → spring.cloud.gateway.server.webflux.routes
 # 2) swagger → springdoc.swagger-ui.urls
 #
-# Eureka: lb://planwith-fo-meeting (must match spring.application.name / compose SPRING_APPLICATION_NAME)
-# Name is always planwith-fo-* (script prefixes planwith- if omitted).
-# Path: align with service @RequestMapping. Default: /api/planwith-fo-meeting/**
-#
-# Service OpenAPI servers MUST be GATEWAY_PUBLIC_URL=/ (spring-service OpenApiConfig).
-# Otherwise Swagger Try-it-out uses Docker hostname:8086 and other PCs fail.
+# Eureka: lb://planwith-fo-meeting
+# OpenAPI servers: GATEWAY_PUBLIC_URL=/ (Docker hostname 금지)
 
 # ── 1) routes (paste under webflux.routes) ──
 
@@ -17,6 +13,10 @@
               uri: lb://planwith-fo-meeting
               predicates:
                 - Path=/api/planwith-fo-meeting/**
+            - id: planwith-fo-meeting-v1
+              uri: lb://planwith-fo-meeting
+              predicates:
+                - Path=/api/v1/meetings,/api/v1/meetings/**
             - id: planwith-fo-meeting-docs
               uri: lb://planwith-fo-meeting
               predicates:
@@ -25,10 +25,5 @@
                 - RewritePath=/docs/planwith-fo-meeting(?<segment>/?.*), /v3/api-docs${segment}
 
 # ── 2) swagger-ui.urls (paste under springdoc.swagger-ui.urls) ──
-# routes 만 붙이면 API는 되도 Gateway Swagger 드롭다운에는 안 보임.
-
 #      - name: planwith-fo-meeting
 #        url: /docs/planwith-fo-meeting
-
-# ── 3) (선택) 첫 번째로 열 서비스로 지정 ──
-# springdoc.swagger-ui.urls-primary-name: planwith-fo-meeting
