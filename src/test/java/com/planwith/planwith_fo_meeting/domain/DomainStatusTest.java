@@ -14,7 +14,7 @@ class DomainStatusTest {
 	void meetingStatusesMatchApiContract() {
 		assertThat(MeetingStatus.values()).containsExactly(
 				MeetingStatus.RECRUITING,
-				MeetingStatus.RECRUITMENT_CLOSED,
+				MeetingStatus.FULL,
 				MeetingStatus.COMPLETED,
 				MeetingStatus.DISBANDED
 		);
@@ -24,7 +24,7 @@ class DomainStatusTest {
 	void participationStatusesMatchApiContract() {
 		assertThat(ParticipationStatus.values()).containsExactly(
 				ParticipationStatus.PENDING,
-				ParticipationStatus.JOINED,
+				ParticipationStatus.APPROVED,
 				ParticipationStatus.REJECTED,
 				ParticipationStatus.LEFT,
 				ParticipationStatus.KICKED
