@@ -1,6 +1,5 @@
 package com.planwith.planwith_fo_meeting.adapter.in.web.dto;
 
-import java.time.Instant;
 import java.util.UUID;
 
 import jakarta.validation.constraints.Max;
@@ -22,11 +21,6 @@ public record CreateMeetingRequest(
 		@Min(value = 2, message = "최대 인원은 2명 이상이어야 합니다.")
 		@Max(value = 50, message = "최대 인원은 50명 이하여야 합니다.")
 		Integer maxMemberCount,
-		String coverImage,
-		String destination,
-		Instant startAt,
-		Instant endAt,
-		String cost,
-		String transport
+		String coverImage
 ) {
 }

@@ -1,6 +1,5 @@
 package com.planwith.planwith_fo_meeting.adapter.in.web;
 
-import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -67,13 +66,14 @@ class MeetingControllerIntegrationTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.success").value(true))
 				.andExpect(jsonPath("$.data.memberUuid").value(HOST_UUID))
-				.andExpect(jsonPath("$.data.hostMemberUuid").value(HOST_UUID))
 				.andExpect(jsonPath("$.data.scheduleUuid").value(SCHEDULE_UUID))
 				.andExpect(jsonPath("$.data.status").value("RECRUITING"))
 				.andExpect(jsonPath("$.data.currentMemberCount").value(1))
 				.andExpect(jsonPath("$.data.maxMemberCount").value(4))
 				.andExpect(jsonPath("$.data.title").value("주말 부산 여행"))
-				.andExpect(jsonPath("$.data.destination").value("부산"));
+				.andExpect(jsonPath("$.data.hostMemberUuid").doesNotExist())
+				.andExpect(jsonPath("$.data.startAt").doesNotExist())
+				.andExpect(jsonPath("$.data.destination").doesNotExist());
 	}
 
 	@Test
@@ -109,28 +109,56 @@ class MeetingControllerIntegrationTests {
 	}
 
 	@Test
-	void guestCanListAndSeeApplyFlag() throws Exception {
+	void guestCanListPagedCardsFromMeetingSnapshot() throws Exception {
 		String meetingUuid = createMeeting(HOST_UUID);
 		mockMvc.perform(get("/api/v1/meetings"))
 				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.page").value(0))
+				.andExpect(jsonPath("$.data.size").value(20))
+				.andExpect(jsonPath("$.data.totalElements").value(1))
 				.andExpect(jsonPath("$.data.content[0].meetingUuid").value(meetingUuid))
-				.andExpect(jsonPath("$.data.content[0].canApply").value(true))
-				.andExpect(jsonPath("$.data.content[0].canEnterChat").value(false))
-				.andExpect(jsonPath("$.data.content[0].accessible").value(true))
-				.andExpect(jsonPath("$.data.content[0].myParticipation").value(nullValue()));
+				.andExpect(jsonPath("$.data.content[0].title").value("주말 부산 여행"))
+				.andExpect(jsonPath("$.data.content[0].intro").value("함께 가요"))
+				.andExpect(jsonPath("$.data.content[0].maxMemberCount").value(4))
+				.andExpect(jsonPath("$.data.content[0].currentMemberCount").value(1))
+				.andExpect(jsonPath("$.data.content[0].destination").value("부산"))
+				.andExpect(jsonPath("$.data.content[0].startDate").value("2026-09-01"))
+				.andExpect(jsonPath("$.data.content[0].endDate").value("2026-09-03"))
+				.andExpect(jsonPath("$.data.content[0].scheduleUuid").doesNotExist())
+				.andExpect(jsonPath("$.data.content[0].cost").doesNotExist())
+				.andExpect(jsonPath("$.data.content[0].canApply").doesNotExist());
 	}
 
 	@Test
-	void hostDetailIncludesParticipation() throws Exception {
+	void listRespectsPageSize() throws Exception {
+		createMeeting(HOST_UUID);
+		createMeeting(HOST_UUID);
+		mockMvc.perform(get("/api/v1/meetings").param("page", "0").param("size", "1"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.size").value(1))
+				.andExpect(jsonPath("$.data.totalElements").value(2))
+				.andExpect(jsonPath("$.data.totalPages").value(2))
+				.andExpect(jsonPath("$.data.content.length()").value(1));
+	}
+
+	@Test
+	void hostDetailIncludesParticipationAndScheduleUuidOnly() throws Exception {
 		String meetingUuid = createMeeting(HOST_UUID);
 		mockMvc.perform(get("/api/v1/meetings/{meetingUuid}", meetingUuid)
 						.header("X-Auth-User-Id", HOST_UUID))
 				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.scheduleUuid").value(SCHEDULE_UUID))
+				.andExpect(jsonPath("$.data.intro").value("함께 가요"))
 				.andExpect(jsonPath("$.data.myParticipation").value("APPROVED"))
 				.andExpect(jsonPath("$.data.myRole").value("HOST"))
 				.andExpect(jsonPath("$.data.canApply").value(false))
 				.andExpect(jsonPath("$.data.canEnterChat").value(true))
-				.andExpect(jsonPath("$.data.canViewMembers").value(true));
+				.andExpect(jsonPath("$.data.canViewMembers").value(true))
+				.andExpect(jsonPath("$.data.startAt").doesNotExist())
+				.andExpect(jsonPath("$.data.endAt").doesNotExist())
+				.andExpect(jsonPath("$.data.cost").doesNotExist())
+				.andExpect(jsonPath("$.data.transport").doesNotExist())
+				.andExpect(jsonPath("$.data.destination").doesNotExist());
 	}
 
 	@Test
@@ -156,8 +184,7 @@ class MeetingControllerIntegrationTests {
 				  "scheduleUuid": "%s",
 				  "title": "주말 부산 여행",
 				  "intro": "함께 가요",
-				  "maxMemberCount": 4,
-				  "destination": "부산"
+				  "maxMemberCount": 4
 				}
 				""".formatted(SCHEDULE_UUID);
 	}

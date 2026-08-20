@@ -36,7 +36,10 @@ public class MeetingPersistenceAdapter implements MeetingRepositoryPort {
 		entity.setTitle(meeting.getTitle());
 		entity.setDescription(meeting.getDescription());
 		entity.setThumbnailUrl(meeting.getThumbnailUrl());
-		entity.setDestination(meeting.getScheduleSnapshot() == null ? null : meeting.getScheduleSnapshot().destination());
+		ScheduleSnapshot snapshot = meeting.getScheduleSnapshot();
+		entity.setDestination(snapshot == null ? null : snapshot.destination());
+		entity.setStartDate(snapshot == null ? null : snapshot.startDate());
+		entity.setEndDate(snapshot == null ? null : snapshot.endDate());
 		entity.setMaxMember(meeting.getMaxMemberCount());
 		entity.setCurrentMember(meeting.getCurrentMemberCount());
 		entity.setMeetingStatus(meeting.getStatus());
@@ -81,7 +84,12 @@ public class MeetingPersistenceAdapter implements MeetingRepositoryPort {
 				entity.getMeetingStatus(),
 				entity.getThumbnailUrl(),
 				entity.getBumpAt(),
-				new ScheduleSnapshot(scheduleUuid, entity.getDestination(), null, null, null, null),
+				new ScheduleSnapshot(
+						scheduleUuid,
+						entity.getDestination(),
+						entity.getStartDate(),
+						entity.getEndDate()
+				),
 				entity.getCreatedAt(),
 				entity.getUpdatedAt()
 		);

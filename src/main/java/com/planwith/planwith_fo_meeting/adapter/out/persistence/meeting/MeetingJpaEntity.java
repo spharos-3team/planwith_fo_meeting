@@ -1,6 +1,7 @@
 package com.planwith.planwith_fo_meeting.adapter.out.persistence.meeting;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 import com.planwith.planwith_fo_meeting.domain.meeting.MeetingStatus;
 
@@ -42,6 +43,12 @@ public class MeetingJpaEntity {
 
 	@Column(name = "destination", length = 100)
 	private String destination;
+
+	@Column(name = "start_date", columnDefinition = "date")
+	private LocalDate startDate;
+
+	@Column(name = "end_date", columnDefinition = "date")
+	private LocalDate endDate;
 
 	@Column(name = "max_member", nullable = false, columnDefinition = "int unsigned")
 	private int maxMember;
@@ -120,6 +127,22 @@ public class MeetingJpaEntity {
 
 	public void setDestination(String destination) {
 		this.destination = destination;
+	}
+
+	public LocalDate getStartDate() {
+		return startDate;
+	}
+
+	public void setStartDate(LocalDate startDate) {
+		this.startDate = startDate;
+	}
+
+	public LocalDate getEndDate() {
+		return endDate;
+	}
+
+	public void setEndDate(LocalDate endDate) {
+		this.endDate = endDate;
 	}
 
 	public int getMaxMember() {
