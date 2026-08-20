@@ -6,7 +6,7 @@
 > 공통 응답: `ApiResponse<T>`  
 > 호출 경로: `Frontend → Gateway(:8000) → Meeting(:8086)` (Access 검증은 Gateway)
 
-최종 갱신: 2026-08-20 (#1 골격)
+최종 갱신: 2026-08-20 (#2 생성)
 
 ---
 
@@ -67,17 +67,17 @@ chat 스키마 (chat 서비스, meeting 아님):
 
 | 구분 | 값 |
 | --- | --- |
-| 모임 | `RECRUITING` 모집중 / `RECRUITMENT_CLOSED` 모집완료 / `COMPLETED` 완료 / `DISBANDED` 해체 |
-| 참여 | `PENDING` 신청대기 / `JOINED` 참여 / `REJECTED` 거절 / `LEFT` 탈퇴 / `KICKED` 강퇴 |
+| 모임 | `RECRUITING` 모집중 / `FULL` 모집완료(정원참) / `COMPLETED` 완료 / `DISBANDED` 해체 |
+| 참여 | `PENDING` 신청대기 / `APPROVED` 참여 / `REJECTED` 거절 / `LEFT` 탈퇴 / `KICKED` 강퇴 |
 | 역할 (meeting) | `HOST` / `VICE_HOST` / `MEMBER` |
 | 채팅방 (chat) | `ACTIVE` / `ENDED` |
 | 채팅 멤버 (chat) | `PENDING` / `APPROVED` / `REJECTED` / `LEFT` / `KICKED` |
 
-참여 `JOINED` → 채팅 멤버 `APPROVED` 로 매핑한다.
+참여 `APPROVED` → 채팅 멤버 `APPROVED` 로 매핑한다.
 
 규칙:
 
-- 생성 시 모임=`RECRUITING`, 호스트=`JOINED`+`HOST`. 채팅방 생성은 **chat 서비스** (`meeting.created`)
+- 생성 시 `meetings.member_uuid`=생성자, 모임=`RECRUITING`, 호스트 `meeting_members`=`APPROVED`+`HOST`. 채팅방 생성은 **chat 서비스** (`meeting.created`)
 - 해체된 모임은 **공개 목록에서 제외**
 - 모집완료는 목록 **하단**
 - 강퇴(`KICKED`) 회원은 재신청 불가
@@ -85,8 +85,8 @@ chat 스키마 (chat 서비스, meeting 아님):
 - 현재 참여 인원보다 작은 `maxMemberCount` 수정 불가
 - 일정(`scheduleUuid`) 없으면 생성 불가
 - 끌어올리기: 글로벌 트래블러·PLAN&WITH 마스터, **6시간** 간격
-- 목록 정렬: `bumpedAt` 최신 → `createdAt` 최신. **모집완료(`RECRUITMENT_CLOSED`)는 하단**
-- 정원 가득 승인 시 자동 `RECRUITMENT_CLOSED`. 인원 빠지면(나가기) 다시 `RECRUITING` 가능 (PDF: 모집 중단 = 다 찼음, 빠지면 입장 가능)
+- 목록 정렬: `bump_at` 최신 → `created_at` 최신. **모집완료(`FULL`)는 하단**
+- 정원 가득 승인 시 자동 `FULL`. 인원 빠지면(나가기) 다시 `RECRUITING` 가능 (PDF: 모집 중단 = 다 찼음, 빠지면 입장 가능)
 - 거절(`REJECTED`)·나가기(`LEFT`) 후 **재신청 가능**. 강퇴(`KICKED`)만 재신청·상세 진입 불가
 - 강퇴 회원: **내 모임 목록에서 제외**. 전체 목록에는 보이되 회색/`accessible=false`, 상세는 403
 - 승인 거절은 내 모임(승인대기)에 남기지 않음. 알림만 (notification 서비스)
@@ -99,7 +99,7 @@ chat 스키마 (chat 서비스, meeting 아님):
 | 상태 | 이슈 | 내용 |
 | --- | --- | --- |
 | ✅ | #1 | 모임 서비스 골격·공통 응답·Gateway Trust |
-| ⬜ Todo | #2 | 모임 생성 |
+| ✅ | #2 | 모임 생성 |
 | ⬜ Todo | #3 | 모임 목록·상세 조회 |
 | ⬜ Todo | #4 | 내 모임 조회 |
 | ⬜ Todo | #5 | 모임 신청·승인·거절 |
@@ -121,13 +121,11 @@ chat 스키마 (chat 서비스, meeting 아님):
 
 | Issue | Method | Endpoint | 인증 | 설명 |
 | --- | --- | --- | --- | --- |
-| #2 | POST | `/api/v1/meetings` | O | 모임 생성 (모집중, 호스트 등록). 채팅방은 `meeting.created` 로 chat이 생성 |
-| #2 | POST | `/api/v1/meetings/{meetingUuid}/cover-image` | O host | 대표 이미지 (stub URL, member 프로필과 동일 패턴) |
 | #3 | GET | `/api/v1/meetings` | optional | 전체 목록. `status`, `page`, `size`. 해체 제외. 모집완료 하단 |
 | #3 | GET | `/api/v1/meetings/{meetingUuid}` | optional | 상세 (소개, 이미지, 인원, 일정 요약, 목적지, 비용, 이동수단, 방장, 생성일, 내 참여상태) |
 | #4 | GET | `/api/v1/meetings/me` | O | 내 모임. `scope=hosted\|joined\|pending`, `status` 필터 |
 | #6 | PATCH | `/api/v1/meetings/{meetingUuid}` | O host | 소개·일정·최대인원 등 수정 (인원 검증) |
-| #6 | PATCH | `/api/v1/meetings/{meetingUuid}/recruitment-status` | O host | `RECRUITING` ↔ `RECRUITMENT_CLOSED` |
+| #6 | PATCH | `/api/v1/meetings/{meetingUuid}/recruitment-status` | O host | `RECRUITING` ↔ `FULL` |
 | #6 | POST | `/api/v1/meetings/{meetingUuid}/bump` | O host | 끌어올리기 (등급·6시간) |
 | #7 | POST | `/api/v1/meetings/{meetingUuid}/complete` | O host | 완료. `meeting.completed` → chat `ENDED` |
 | #7 | POST | `/api/v1/meetings/{meetingUuid}/disband` | O host | 해체. `meeting.disbanded` → chat 방·메시지 삭제 |
@@ -138,7 +136,7 @@ chat 스키마 (chat 서비스, meeting 아님):
 | --- | --- | --- | --- | --- |
 | #5 | POST | `/api/v1/meetings/{meetingUuid}/applications` | O | 신청 (`message`). 상태 `PENDING`. 강퇴 회원 거부 |
 | #5 | GET | `/api/v1/meetings/{meetingUuid}/applications` | O host | 승인 대기 목록 + 신청 메시지 |
-| #5 | POST | `/api/v1/meetings/{meetingUuid}/applications/{applicationUuid}/approve` | O host | 승인 → `JOINED` + `participation.changed` |
+| #5 | POST | `/api/v1/meetings/{meetingUuid}/applications/{applicationUuid}/approve` | O host | 승인 → `APPROVED` + `participation.changed` |
 | #5 | POST | `/api/v1/meetings/{meetingUuid}/applications/{applicationUuid}/reject` | O host | 거절 → `REJECTED` + `participation.changed` |
 | #5 | GET | `/api/v1/meetings/{meetingUuid}/participation` | O | 내 참여 상태 |
 
@@ -166,8 +164,8 @@ chat 스키마 (chat 서비스, meeting 아님):
 
 채팅 REST/SSE (`/api/v1/chat-rooms/**`) 는 chat 서비스 이슈. 이 레포의 #9 #10 은 닫는다.
 
-상태 매핑 (PDF → API): `ing`→`RECRUITING`, `pull`(모집 중단/다 참)→`RECRUITMENT_CLOSED`, `finish`→`COMPLETED`, `delete`→`DISBANDED`.  
-참여: 대기=`PENDING`, 참여=`JOINED`, 거절=`REJECTED`, 퇴장=`LEFT`, 강퇴=`KICKED`.
+상태 매핑 (PDF → API): `ing`→`RECRUITING`, `pull`(모집 중단/다 참)→`FULL`, `finish`→`COMPLETED`, `delete`→`DISBANDED`.  
+참여: 대기=`PENDING`, 참여=`APPROVED`, 거절=`REJECTED`, 퇴장=`LEFT`, 강퇴=`KICKED`.
 
 ---
 
@@ -200,6 +198,8 @@ chat 스키마 (chat 서비스, meeting 아님):
 | Issue | Method | Endpoint | 인증 | 설명 |
 | --- | --- | --- | --- | --- |
 | — | GET | `/api/planwith-fo-meeting/deploy-check` | X | 배포 확인 (스캐폴드) |
+| #2 | POST | `/api/v1/meetings` | O | 모임 생성. `meetings.member_uuid`=생성자, 호스트 `APPROVED`+`HOST`. 채팅은 `meeting.created` (#11) |
+| #2 | POST | `/api/v1/meetings/{meetingUuid}/cover-image` | O host | 대표 이미지 stub `stub://meetings/{uuid}.ext` |
 
 ---
 
