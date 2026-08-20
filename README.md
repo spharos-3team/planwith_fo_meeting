@@ -1,12 +1,13 @@
 # planwith_fo_meeting
 
-서버 노트북 Self-hosted Runner 배포 확인용 Spring Boot 서비스입니다.
+모임(Meeting) FO 서비스. API 진행 현황: [docs/API.md](docs/API.md)
 
 | 항목 | 값 |
 | --- | --- |
 | Compose / Eureka 이름 | `planwith-fo-meeting` |
 | 이미지 | `planwith/planwith-fo-meeting:latest` |
 | 포트 | `8086` |
+| API Prefix | `/api/v1/meetings` |
 | 배포 확인 | `GET /api/planwith-fo-meeting/deploy-check` |
 
 ## 로컬 실행

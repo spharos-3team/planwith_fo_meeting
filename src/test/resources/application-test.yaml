@@ -1,3 +1,31 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:meeting_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  jackson:
+    time-zone: UTC
+
 eureka:
   client:
     enabled: false
+
+app:
+  gateway:
+    internal-token: test-gateway-token
+    trust-check-enabled: false
+    public-url: /
+
+management:
+  health:
+    diskspace:
+      enabled: false

@@ -1,0 +1,24 @@
+name: planwith-fo-meeting-deps
+
+services:
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: planwith_root
+      MYSQL_DATABASE: meeting_db
+      MYSQL_USER: meeting_user
+      MYSQL_PASSWORD: meeting_pass
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+  kafka:
+    image: apache/kafka:3.8.0
+    ports:
+      - "9092:9092"
