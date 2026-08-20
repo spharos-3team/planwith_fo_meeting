@@ -1,5 +1,7 @@
 package com.planwith.planwith_fo_meeting.adapter.in.web;
 
+import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -104,6 +106,38 @@ class MeetingControllerIntegrationTests {
 						.header("X-Auth-User-Id", OTHER_UUID))
 				.andExpect(status().isForbidden())
 				.andExpect(jsonPath("$.error.code").value("NOT_MEETING_HOST"));
+	}
+
+	@Test
+	void guestCanListAndSeeApplyFlag() throws Exception {
+		String meetingUuid = createMeeting(HOST_UUID);
+		mockMvc.perform(get("/api/v1/meetings"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.content[0].meetingUuid").value(meetingUuid))
+				.andExpect(jsonPath("$.data.content[0].canApply").value(true))
+				.andExpect(jsonPath("$.data.content[0].canEnterChat").value(false))
+				.andExpect(jsonPath("$.data.content[0].accessible").value(true))
+				.andExpect(jsonPath("$.data.content[0].myParticipation").value(nullValue()));
+	}
+
+	@Test
+	void hostDetailIncludesParticipation() throws Exception {
+		String meetingUuid = createMeeting(HOST_UUID);
+		mockMvc.perform(get("/api/v1/meetings/{meetingUuid}", meetingUuid)
+						.header("X-Auth-User-Id", HOST_UUID))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.myParticipation").value("APPROVED"))
+				.andExpect(jsonPath("$.data.myRole").value("HOST"))
+				.andExpect(jsonPath("$.data.canApply").value(false))
+				.andExpect(jsonPath("$.data.canEnterChat").value(true))
+				.andExpect(jsonPath("$.data.canViewMembers").value(true));
+	}
+
+	@Test
+	void unknownMeetingDetailIsNotFound() throws Exception {
+		mockMvc.perform(get("/api/v1/meetings/{meetingUuid}", "33333333-3333-3333-3333-333333333333"))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.error.code").value("MEETING_NOT_FOUND"));
 	}
 
 	private String createMeeting(String hostUuid) throws Exception {

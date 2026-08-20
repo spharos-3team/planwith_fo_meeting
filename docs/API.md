@@ -6,7 +6,7 @@
 > 공통 응답: `ApiResponse<T>`  
 > 호출 경로: `Frontend → Gateway(:8000) → Meeting(:8086)` (Access 검증은 Gateway)
 
-최종 갱신: 2026-08-20 (#2 생성)
+최종 갱신: 2026-08-20 (#3 목록·상세)
 
 ---
 
@@ -100,7 +100,7 @@ chat 스키마 (chat 서비스, meeting 아님):
 | --- | --- | --- |
 | ✅ | #1 | 모임 서비스 골격·공통 응답·Gateway Trust |
 | ✅ | #2 | 모임 생성 |
-| ⬜ Todo | #3 | 모임 목록·상세 조회 |
+| ✅ | #3 | 모임 목록·상세 조회 |
 | ⬜ Todo | #4 | 내 모임 조회 |
 | ⬜ Todo | #5 | 모임 신청·승인·거절 |
 | ⬜ Todo | #6 | 모임 수정·모집상태·끌어올리기 |
@@ -121,8 +121,6 @@ chat 스키마 (chat 서비스, meeting 아님):
 
 | Issue | Method | Endpoint | 인증 | 설명 |
 | --- | --- | --- | --- | --- |
-| #3 | GET | `/api/v1/meetings` | optional | 전체 목록. `status`, `page`, `size`. 해체 제외. 모집완료 하단 |
-| #3 | GET | `/api/v1/meetings/{meetingUuid}` | optional | 상세 (소개, 이미지, 인원, 일정 요약, 목적지, 비용, 이동수단, 방장, 생성일, 내 참여상태) |
 | #4 | GET | `/api/v1/meetings/me` | O | 내 모임. `scope=hosted\|joined\|pending`, `status` 필터 |
 | #6 | PATCH | `/api/v1/meetings/{meetingUuid}` | O host | 소개·일정·최대인원 등 수정 (인원 검증) |
 | #6 | PATCH | `/api/v1/meetings/{meetingUuid}/recruitment-status` | O host | `RECRUITING` ↔ `FULL` |
@@ -200,6 +198,8 @@ chat 스키마 (chat 서비스, meeting 아님):
 | — | GET | `/api/planwith-fo-meeting/deploy-check` | X | 배포 확인 (스캐폴드) |
 | #2 | POST | `/api/v1/meetings` | O | 모임 생성. `meetings.member_uuid`=생성자, 호스트 `APPROVED`+`HOST`. 채팅은 `meeting.created` (#11) |
 | #2 | POST | `/api/v1/meetings/{meetingUuid}/cover-image` | O host | 대표 이미지 stub `stub://meetings/{uuid}.ext` |
+| #3 | GET | `/api/v1/meetings` | optional | 전체 목록. 해체 제외, `FULL` 하단. 로그인 시 내 참여상태 |
+| #3 | GET | `/api/v1/meetings/{meetingUuid}` | optional | 상세. 강퇴는 403, 해체는 404 |
 
 ---
 
