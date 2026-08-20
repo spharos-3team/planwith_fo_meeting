@@ -9,7 +9,7 @@
 # Path: align with service @RequestMapping. Default: /api/planwith-fo-meeting/**
 #
 # Service OpenAPI servers MUST be GATEWAY_PUBLIC_URL=/ (spring-service OpenApiConfig).
-# Otherwise Swagger Try-it-out uses Docker hostname:8085 and other PCs fail.
+# Otherwise Swagger Try-it-out uses Docker hostname:8086 and other PCs fail.
 
 # ── 1) routes (paste under webflux.routes) ──
 

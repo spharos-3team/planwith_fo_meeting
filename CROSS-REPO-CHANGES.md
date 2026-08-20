@@ -1,7 +1,7 @@
 # Cross-repo change report — planwith-fo-meeting
 
 Generated: 2026-08-20 10:59
-Port: 8085
+Port: 8086
 Branch: develop
 Domain short: meeting
 MySQL schema: meeting_db / meeting_user
@@ -38,7 +38,7 @@ Tables are created by JPA `ddl-auto=update`. SQL only has CREATE DATABASE / USER
 | `gateway.route.snippet.yml` | created (Gateway, paste manually) |
 | `CROSS-REPO-CHANGES.md` | this file |
 
-GitHub repo: `planwith_planwith_fo_meeting` (team rule `planwith_<name>`)
+GitHub repo: `planwith_fo_meeting` (team rule `planwith_<name>`)
 Image: `planwith/planwith-fo-meeting:latest`
 
 ---

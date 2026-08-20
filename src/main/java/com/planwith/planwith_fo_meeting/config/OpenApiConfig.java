@@ -23,7 +23,7 @@ public class OpenApiConfig {
 						.title("PlanWith planwith-fo-meeting API")
 						.description("""
 								Call APIs through the API Gateway (:8000).
-								Do not put Docker hostname or :8085 in OpenAPI servers.
+								Do not put Docker hostname or :8086 in OpenAPI servers.
 								Swagger Try-it-out must use the browser origin (Gateway).
 								""")
 						.version("v1"))

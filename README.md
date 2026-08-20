@@ -6,7 +6,7 @@
 | --- | --- |
 | Compose / Eureka 이름 | `planwith-fo-meeting` |
 | 이미지 | `planwith/planwith-fo-meeting:latest` |
-| 포트 | `8085` |
+| 포트 | `8086` |
 | 배포 확인 | `GET /api/planwith-fo-meeting/deploy-check` |
 
 ## 로컬 실행
@@ -15,12 +15,12 @@
 .\gradlew.bat bootRun
 ```
 
-- Swagger UI (로컬 bootRun만): `http://localhost:8085/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8085/v3/api-docs`
+- Swagger UI (로컬 bootRun만): `http://localhost:8086/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8086/v3/api-docs`
 - Swagger UI (다른 PC / Docker): `http://localhost:8000/swagger-ui.html` (select `planwith-fo-meeting`)
-- Deploy check (서버 localhost): `http://localhost:8085/api/planwith-fo-meeting/deploy-check`
+- Deploy check (서버 localhost): `http://localhost:8086/api/planwith-fo-meeting/deploy-check`
 
-다른 PC는 서비스 포트 `8085`를 직접 호출하지 않는다. 경로는 `브라우저 → Gateway :8000 → Eureka → planwith-fo-meeting:8085` 이다. OpenAPI `servers`는 `GATEWAY_PUBLIC_URL=/` 이라 Swagger가 Docker hostname을 쓰지 않는다.
+다른 PC는 서비스 포트 `8086`를 직접 호출하지 않는다. 경로는 `브라우저 → Gateway :8000 → Eureka → planwith-fo-meeting:8086` 이다. OpenAPI `servers`는 `GATEWAY_PUBLIC_URL=/` 이라 Swagger가 Docker hostname을 쓰지 않는다.
 
 ## 로그인 테스트
 
@@ -43,4 +43,4 @@
 2. `planwith-infra` compose에 `planwith-fo-meeting` 등록 후 서버 `C:\planwith\docker-compose.yml` 반영
 3. Actions Deploy 성공 확인
 4. `http://<서버IP>:8000/swagger-ui.html` 에서 `planwith-fo-meeting` 선택 후 API 호출
-5. (서버 PC localhost) `http://127.0.0.1:8085/api/planwith-fo-meeting/deploy-check` 응답의 `marker` 확인
+5. (서버 PC localhost) `http://127.0.0.1:8086/api/planwith-fo-meeting/deploy-check` 응답의 `marker` 확인

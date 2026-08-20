@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Spring Boot 17 + Gradle Wrapper 기준
-# 8085 는 new-service.ps1 이 치환합니다.
+# 8086 는 new-service.ps1 이 치환합니다.
 
 FROM eclipse-temurin:17-jdk-alpine AS builder
 WORKDIR /app
@@ -21,5 +21,5 @@ USER spring:spring
 
 COPY --from=builder /app/build/libs/*.jar app.jar
 
-EXPOSE 8085
+EXPOSE 8086
 ENTRYPOINT ["java", "-jar", "app.jar"]
