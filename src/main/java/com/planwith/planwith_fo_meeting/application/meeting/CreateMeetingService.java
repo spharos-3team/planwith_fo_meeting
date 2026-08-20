@@ -43,8 +43,7 @@ public class CreateMeetingService implements CreateMeetingUseCase {
 		if (command.scheduleUuid() == null) {
 			throw new BusinessException(ErrorCode.SCHEDULE_REQUIRED);
 		}
-		ScheduleSnapshot lookedUp = scheduleQueryPort.requireSchedule(command.scheduleUuid());
-		ScheduleSnapshot snapshot = mergeSnapshot(lookedUp, command.scheduleSnapshot());
+		ScheduleSnapshot schedule = scheduleQueryPort.requireSchedule(command.scheduleUuid());
 		Instant now = Instant.now();
 		Meeting meeting = Meeting.create(
 				command.hostMemberUuid(),
@@ -53,7 +52,7 @@ public class CreateMeetingService implements CreateMeetingUseCase {
 				command.intro().trim(),
 				command.maxMemberCount(),
 				blankToNull(command.coverImage()),
-				snapshot,
+				schedule,
 				now
 		);
 		Meeting saved = meetingRepositoryPort.save(meeting);
@@ -66,24 +65,6 @@ public class CreateMeetingService implements CreateMeetingUseCase {
 				now
 		));
 		return saved;
-	}
-
-	private ScheduleSnapshot mergeSnapshot(ScheduleSnapshot lookedUp, ScheduleSnapshot requested) {
-		if (requested == null) {
-			return lookedUp;
-		}
-		return new ScheduleSnapshot(
-				lookedUp.scheduleUuid(),
-				firstText(requested.destination(), lookedUp.destination()),
-				requested.startAt() != null ? requested.startAt() : lookedUp.startAt(),
-				requested.endAt() != null ? requested.endAt() : lookedUp.endAt(),
-				firstText(requested.cost(), lookedUp.cost()),
-				firstText(requested.transport(), lookedUp.transport())
-		);
-	}
-
-	private String firstText(String preferred, String fallback) {
-		return StringUtils.hasText(preferred) ? preferred : fallback;
 	}
 
 	private String blankToNull(String value) {

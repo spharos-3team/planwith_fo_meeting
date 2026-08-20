@@ -30,7 +30,6 @@ import com.planwith.planwith_fo_meeting.application.port.in.ListMeetingsUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.UploadMeetingCoverImageUseCase;
 import com.planwith.planwith_fo_meeting.config.OpenApiConfig;
 import com.planwith.planwith_fo_meeting.domain.meeting.MeetingStatus;
-import com.planwith.planwith_fo_meeting.domain.meeting.ScheduleSnapshot;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -66,13 +65,13 @@ public class MeetingController {
 	}
 
 	@GetMapping
-	@Operation(summary = "모임 목록 (해체 제외, FULL 하단)")
+	@Operation(summary = "모임 목록 카드. 일정은 생성 시 스냅샷. page/size, 기본 해체·완료 제외")
 	public ResponseEntity<ApiResponse<PagedResponse<MeetingListItemResponse>>> list(
 			@RequestParam(required = false) MeetingStatus status,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "20") int size
 	) {
-		ListMeetingsUseCase.Result result = listMeetingsUseCase.list(status, page, size, viewerMemberUuid());
+		ListMeetingsUseCase.Result result = listMeetingsUseCase.list(status, page, size);
 		PagedResponse<MeetingListItemResponse> body = new PagedResponse<>(
 				result.content().stream().map(MeetingListItemResponse::from).toList(),
 				result.page(),
@@ -84,7 +83,7 @@ public class MeetingController {
 	}
 
 	@GetMapping("/{meetingUuid}")
-	@Operation(summary = "모임 상세")
+	@Operation(summary = "모임 상세. 여행 기간·비용·이동수단은 scheduleUuid로 schedule 서비스 조회")
 	public ResponseEntity<ApiResponse<MeetingDetailResponse>> detail(@PathVariable UUID meetingUuid) {
 		return ResponseEntity.ok(ApiResponse.success(
 				MeetingDetailResponse.from(getMeetingDetailUseCase.get(meetingUuid, viewerMemberUuid()))
@@ -101,15 +100,7 @@ public class MeetingController {
 				request.title(),
 				request.intro(),
 				request.maxMemberCount(),
-				request.coverImage(),
-				new ScheduleSnapshot(
-						request.scheduleUuid(),
-						request.destination(),
-						request.startAt(),
-						request.endAt(),
-						request.cost(),
-						request.transport()
-				)
+				request.coverImage()
 		)));
 		return ResponseEntity.ok(ApiResponse.success(response));
 	}

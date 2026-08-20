@@ -21,7 +21,7 @@
 | 신청/승인/거절, 구성원, 부방장, 강퇴, 탈퇴 | **meeting** |
 | 채팅방·멤버·읽음·알림 (`chat_rooms`, `chat_members` MySQL) | **chat** |
 | 메시지 (`chat_messages` MongoDB) | **chat** |
-| 일정 원본 | schedule (`scheduleUuid` + 요약 스냅샷) |
+| 일정 원본 | schedule. 목록 카드용 목적지·기간만 meeting이 생성 시 스냅샷 |
 | 프로필·팔로우 | member |
 | 끌어올리기 등급 | grade |
 | 스토리 / 토큰 / 멤버십 / 결제 | story / token / grade·payment |
@@ -58,10 +58,12 @@ chat 스키마 (chat 서비스, meeting 아님):
 - 외부 식별자: `*Uuid` (char 36). PK는 내부용
 - 시간: UTC. 응답 Instant
 - 인증 API: Gateway `X-Auth-User-Id` → `AuthenticatedUserContext` (헤더 직접 파싱 금지)
-- 비회원 허용: 전체 모임 목록·상세. 로그인 시 `myParticipation` 포함
+- 비회원 허용: 전체 모임 목록(카드)·상세. 로그인 시 **상세에만** `myParticipation` 포함
 - 헥사고날: `adapter → application → domain` (`meeting` / `participation`). **chat 도메인 없음**
 - Entity를 API 응답으로 반환하지 않음
-- 페이지: `page` 기본 0, `size` 기본 20, 최대 50 (`PagedResponse`)
+- 페이지: `page` 기본 0, `size` 기본 20, 최대 50 (`PagedResponse`). 목록은 전량 조회하지 않음
+- 상세 화면의 일정 인원·예상 비용·이동수단은 `scheduleUuid`로 **schedule 서비스**가 반환
+- 목록 카드의 목적지·여행 기간은 생성 시 meetings에 스냅샷 저장. 목록은 meeting API만 호출
 
 ### 상태
 
@@ -79,16 +81,18 @@ chat 스키마 (chat 서비스, meeting 아님):
 
 - 생성 시 `meetings.member_uuid`=생성자, 모임=`RECRUITING`, 호스트 `meeting_members`=`APPROVED`+`HOST`. 채팅방 생성은 **chat 서비스** (`meeting.created`)
 - 해체된 모임은 **공개 목록에서 제외**
+- 완료된 모임은 **기본 공개 목록에서 제외** (`status=COMPLETED`로만 조회)
 - 모집완료는 목록 **하단**
-- 강퇴(`KICKED`) 회원은 재신청 불가
+- 강퇴(`KICKED`) 회원은 재신청 불가. 공개 목록 카드는 동일하게 보이며, 상세는 403
 - 부방장 최대 1명 (meeting). 채팅 삭제/숨김/강퇴는 **chat**이 역할 이벤트 보고 강제
 - 현재 참여 인원보다 작은 `maxMemberCount` 수정 불가
 - 일정(`scheduleUuid`) 없으면 생성 불가
 - 끌어올리기: 글로벌 트래블러·PLAN&WITH 마스터, **6시간** 간격
-- 목록 정렬: `bump_at` 최신 → `created_at` 최신. **모집완료(`FULL`)는 하단**
+- 목록 정렬: `bump_at` 최신 → `created_at` 최신. **모집완료(`FULL`)는 하단**. 한 페이지 20개
+- 목록 카드 스냅샷: 생성 시 schedule에서 `destination`, `start_date`, `end_date`를 meetings에 복사. 목록은 일정 서비스를 호출하지 않음
 - 정원 가득 승인 시 자동 `FULL`. 인원 빠지면(나가기) 다시 `RECRUITING` 가능 (PDF: 모집 중단 = 다 찼음, 빠지면 입장 가능)
 - 거절(`REJECTED`)·나가기(`LEFT`) 후 **재신청 가능**. 강퇴(`KICKED`)만 재신청·상세 진입 불가
-- 강퇴 회원: **내 모임 목록에서 제외**. 전체 목록에는 보이되 회색/`accessible=false`, 상세는 403
+- 강퇴 회원: **내 모임 목록에서 제외**. 공개 목록 카드는 보이되 상세는 403
 - 승인 거절은 내 모임(승인대기)에 남기지 않음. 알림만 (notification 서비스)
 - 해체 시 호스트 포함 전원 참여상태 `LEFT` 후 `DISBANDED`. 공개 목록에서 글 제거
 
@@ -173,10 +177,10 @@ chat 스키마 (chat 서비스, meeting 아님):
 
 | PDF 커맨드 | meeting API | 비고 |
 | --- | --- | --- |
-| 모임 탭 / 목록 (최신순) | `GET /meetings` #3 | 정렬에 `bumpedAt` 포함 |
+| 모임 탭 / 목록 (최신순) | `GET /meetings` #3 | 카드 20개씩. 목적지·기간은 생성 시 스냅샷 |
 | 내 모임 (만든/참여/대기) | `GET /meetings/me` #4 | 거절·강퇴는 이 리스트에 없음 |
-| 상세 (guest/host 버튼) | `GET /meetings/{uuid}` #3 | 응답에 신청/대기/입장/구성원 가능 여부 |
-| 생성 (+채팅방 생성) | `POST /meetings` #2 + 이벤트 #11 | 일정 없으면 생성 불가. 일정 목록은 schedule |
+| 상세 (guest/host 버튼) | `GET /meetings/{uuid}` #3 | 모임 필드 + `scheduleUuid`. 여행 정보는 schedule |
+| 생성 (+채팅방 생성) | `POST /meetings` #2 + 이벤트 #11 | 일정 코드만. 기간·비용은 body에 넣지 않음 |
 | 수정 | `PATCH /meetings/{uuid}` #6 | `meeting.updated` 알림 |
 | 끌어올리기 | `POST .../bump` #6 | 6시간, 특정 등급 |
 | 모집 중단/재개 | `PATCH .../recruitment-status` #6 | 정원 가득 시 자동 pull |
@@ -196,10 +200,10 @@ chat 스키마 (chat 서비스, meeting 아님):
 | Issue | Method | Endpoint | 인증 | 설명 |
 | --- | --- | --- | --- | --- |
 | — | GET | `/api/planwith-fo-meeting/deploy-check` | X | 배포 확인 (스캐폴드) |
-| #2 | POST | `/api/v1/meetings` | O | 모임 생성. `meetings.member_uuid`=생성자, 호스트 `APPROVED`+`HOST`. 채팅은 `meeting.created` (#11) |
+| #2 | POST | `/api/v1/meetings` | O | 모임 생성. body는 `scheduleUuid`+제목+소개+최대인원(+커버). 일정 상세 필드는 받지 않음 |
 | #2 | POST | `/api/v1/meetings/{meetingUuid}/cover-image` | O host | 대표 이미지 stub `stub://meetings/{uuid}.ext` |
-| #3 | GET | `/api/v1/meetings` | optional | 전체 목록. 해체 제외, `FULL` 하단. 로그인 시 내 참여상태 |
-| #3 | GET | `/api/v1/meetings/{meetingUuid}` | optional | 상세. 강퇴는 403, 해체는 404 |
+| #3 | GET | `/api/v1/meetings` | X | 카드: 사진·제목·인원·소개·목적지·기간 스냅샷. `page`/`size`. 해체·완료 제외 |
+| #3 | GET | `/api/v1/meetings/{meetingUuid}` | optional | 모임 상세(사진·제목·인원·소개·`scheduleUuid`). 강퇴 403, 해체 404. 여행 기간·비용 등은 schedule |
 
 ---
 
