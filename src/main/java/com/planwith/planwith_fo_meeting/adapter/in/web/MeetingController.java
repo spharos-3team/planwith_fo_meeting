@@ -23,10 +23,12 @@ import com.planwith.planwith_fo_meeting.adapter.in.web.dto.CreateMeetingRequest;
 import com.planwith.planwith_fo_meeting.adapter.in.web.dto.MeetingDetailResponse;
 import com.planwith.planwith_fo_meeting.adapter.in.web.dto.MeetingListItemResponse;
 import com.planwith.planwith_fo_meeting.adapter.in.web.dto.MeetingResponse;
+import com.planwith.planwith_fo_meeting.adapter.in.web.dto.MyMeetingsResponse;
 import com.planwith.planwith_fo_meeting.adapter.in.web.dto.PagedResponse;
 import com.planwith.planwith_fo_meeting.application.port.in.CreateMeetingUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.GetMeetingDetailUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.ListMeetingsUseCase;
+import com.planwith.planwith_fo_meeting.application.port.in.ListMyMeetingsUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.UploadMeetingCoverImageUseCase;
 import com.planwith.planwith_fo_meeting.config.OpenApiConfig;
 import com.planwith.planwith_fo_meeting.domain.meeting.MeetingStatus;
@@ -48,6 +50,7 @@ public class MeetingController {
 	private final CreateMeetingUseCase createMeetingUseCase;
 	private final UploadMeetingCoverImageUseCase uploadMeetingCoverImageUseCase;
 	private final ListMeetingsUseCase listMeetingsUseCase;
+	private final ListMyMeetingsUseCase listMyMeetingsUseCase;
 	private final GetMeetingDetailUseCase getMeetingDetailUseCase;
 
 	public MeetingController(
@@ -55,12 +58,14 @@ public class MeetingController {
 			CreateMeetingUseCase createMeetingUseCase,
 			UploadMeetingCoverImageUseCase uploadMeetingCoverImageUseCase,
 			ListMeetingsUseCase listMeetingsUseCase,
+			ListMyMeetingsUseCase listMyMeetingsUseCase,
 			GetMeetingDetailUseCase getMeetingDetailUseCase
 	) {
 		this.authContextResolver = authContextResolver;
 		this.createMeetingUseCase = createMeetingUseCase;
 		this.uploadMeetingCoverImageUseCase = uploadMeetingCoverImageUseCase;
 		this.listMeetingsUseCase = listMeetingsUseCase;
+		this.listMyMeetingsUseCase = listMyMeetingsUseCase;
 		this.getMeetingDetailUseCase = getMeetingDetailUseCase;
 	}
 
@@ -78,6 +83,33 @@ public class MeetingController {
 				result.size(),
 				result.totalElements(),
 				result.totalPages()
+		);
+		return ResponseEntity.ok(ApiResponse.success(body));
+	}
+
+	@GetMapping("/me")
+	@Operation(summary = "내 모임. scope=hosted|joined|pending")
+	public ResponseEntity<ApiResponse<MyMeetingsResponse<MeetingListItemResponse>>> myMeetings(
+			@RequestParam(defaultValue = "hosted") String scope,
+			@RequestParam(required = false) MeetingStatus status,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size
+	) {
+		UUID memberUuid = authContextResolver.requireUser().userId();
+		ListMyMeetingsUseCase.Result result = listMyMeetingsUseCase.list(
+				memberUuid,
+				ListMyMeetingsUseCase.parseScope(scope),
+				status,
+				page,
+				size
+		);
+		MyMeetingsResponse<MeetingListItemResponse> body = new MyMeetingsResponse<>(
+				result.content().stream().map(MeetingListItemResponse::from).toList(),
+				result.page(),
+				result.size(),
+				result.totalElements(),
+				result.totalPages(),
+				result.canCreate()
 		);
 		return ResponseEntity.ok(ApiResponse.success(body));
 	}

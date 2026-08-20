@@ -105,7 +105,7 @@ chat 스키마 (chat 서비스, meeting 아님):
 | ✅ | #1 | 모임 서비스 골격·공통 응답·Gateway Trust |
 | ✅ | #2 | 모임 생성 |
 | ✅ | #3 | 모임 목록·상세 조회 |
-| ⬜ Todo | #4 | 내 모임 조회 |
+| ✅ | #4 | 내 모임 조회 |
 | ⬜ Todo | #5 | 모임 신청·승인·거절 |
 | ⬜ Todo | #6 | 모임 수정·모집상태·끌어올리기 |
 | ⬜ Todo | #7 | 모임 완료·해체 |
@@ -125,7 +125,6 @@ chat 스키마 (chat 서비스, meeting 아님):
 
 | Issue | Method | Endpoint | 인증 | 설명 |
 | --- | --- | --- | --- | --- |
-| #4 | GET | `/api/v1/meetings/me` | O | 내 모임. `scope=hosted\|joined\|pending`, `status` 필터 |
 | #6 | PATCH | `/api/v1/meetings/{meetingUuid}` | O host | 소개·일정·최대인원 등 수정 (인원 검증) |
 | #6 | PATCH | `/api/v1/meetings/{meetingUuid}/recruitment-status` | O host | `RECRUITING` ↔ `FULL` |
 | #6 | POST | `/api/v1/meetings/{meetingUuid}/bump` | O host | 끌어올리기 (등급·6시간) |
@@ -204,6 +203,7 @@ chat 스키마 (chat 서비스, meeting 아님):
 | #2 | POST | `/api/v1/meetings/{meetingUuid}/cover-image` | O host | 대표 이미지 stub `stub://meetings/{uuid}.ext` |
 | #3 | GET | `/api/v1/meetings` | X | 카드: 사진·제목·인원·소개·목적지·기간 스냅샷. `page`/`size`. 해체·완료 제외 |
 | #3 | GET | `/api/v1/meetings/{meetingUuid}` | optional | 모임 상세(사진·제목·인원·소개·`scheduleUuid`). 강퇴 403, 해체 404. 여행 기간·비용 등은 schedule |
+| #4 | GET | `/api/v1/meetings/me` | O | 내 모임. `scope=hosted\|joined\|pending`. 해체 제외, `FULL` 하단. hosted면 `canCreate=true` |
 
 ---
 
