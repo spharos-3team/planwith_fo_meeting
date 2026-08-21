@@ -95,6 +95,22 @@ public class MeetingMember {
 		return status == ParticipationStatus.REJECTED || status == ParticipationStatus.LEFT;
 	}
 
+	public boolean isKicked() {
+		return status == ParticipationStatus.KICKED;
+	}
+
+	public MeetingMember leave() {
+		return new MeetingMember(
+				meetingId,
+				memberUuid,
+				role,
+				ParticipationStatus.LEFT,
+				joinMessage,
+				joinAt,
+				joinedAt
+		);
+	}
+
 	public Long getMeetingId() {
 		return meetingId;
 	}

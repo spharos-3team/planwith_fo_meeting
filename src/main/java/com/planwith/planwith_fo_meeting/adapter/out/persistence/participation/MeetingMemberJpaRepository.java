@@ -18,4 +18,6 @@ public interface MeetingMemberJpaRepository extends JpaRepository<MeetingMemberJ
 			Long meetingId,
 			ParticipationStatus status
 	);
+
+	List<MeetingMemberJpaEntity> findByMeeting_MeetingId(Long meetingId);
 }

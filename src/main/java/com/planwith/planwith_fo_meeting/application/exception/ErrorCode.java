@@ -21,6 +21,7 @@ public enum ErrorCode {
 	MEETING_FULL(HttpStatus.CONFLICT, "MEETING_FULL", "정원이 가득 찼습니다."),
 	APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "APPLICATION_NOT_FOUND", "신청을 찾을 수 없습니다."),
 	APPLICATION_NOT_PENDING(HttpStatus.CONFLICT, "APPLICATION_NOT_PENDING", "대기 중인 신청만 처리할 수 있습니다."),
+	MEETING_ALREADY_COMPLETED(HttpStatus.CONFLICT, "MEETING_ALREADY_COMPLETED", "이미 완료된 모임입니다."),
 	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다.");
 
 	private final HttpStatus status;

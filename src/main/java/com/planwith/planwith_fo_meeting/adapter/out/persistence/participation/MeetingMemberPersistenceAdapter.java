@@ -79,6 +79,16 @@ public class MeetingMemberPersistenceAdapter implements MeetingMemberRepositoryP
 				.toList();
 	}
 
+	@Override
+	@Transactional(readOnly = true)
+	public List<MeetingMember> findByMeetingId(Long meetingId) {
+		return meetingMemberJpaRepository
+				.findByMeeting_MeetingId(meetingId)
+				.stream()
+				.map(this::toDomain)
+				.toList();
+	}
+
 	private MeetingMember toDomain(MeetingMemberJpaEntity saved) {
 		return new MeetingMember(
 				saved.getMeeting().getMeetingId(),

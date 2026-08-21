@@ -17,4 +17,6 @@ public interface MeetingMemberRepositoryPort {
 	List<MeetingMember> findByMeetingIdsAndMemberUuid(Collection<Long> meetingIds, UUID memberUuid);
 
 	List<MeetingMember> findByMeetingIdAndStatus(Long meetingId, ParticipationStatus status);
+
+	List<MeetingMember> findByMeetingId(Long meetingId);
 }

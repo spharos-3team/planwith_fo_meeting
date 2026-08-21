@@ -25,7 +25,9 @@ import com.planwith.planwith_fo_meeting.adapter.in.web.dto.MeetingListItemRespon
 import com.planwith.planwith_fo_meeting.adapter.in.web.dto.MeetingResponse;
 import com.planwith.planwith_fo_meeting.adapter.in.web.dto.MyMeetingsResponse;
 import com.planwith.planwith_fo_meeting.adapter.in.web.dto.PagedResponse;
+import com.planwith.planwith_fo_meeting.application.port.in.CompleteMeetingUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.CreateMeetingUseCase;
+import com.planwith.planwith_fo_meeting.application.port.in.DisbandMeetingUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.GetMeetingDetailUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.ListMeetingsUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.ListMyMeetingsUseCase;
@@ -41,7 +43,7 @@ import jakarta.validation.Valid;
 @Validated
 @RestController
 @RequestMapping("/api/v1/meetings")
-@Tag(name = "meetings", description = "모임 생성·조회")
+@Tag(name = "meetings", description = "모임 생성·조회·완료·해체")
 @SecurityRequirement(name = OpenApiConfig.BEARER_SCHEME)
 @SecurityRequirement(name = OpenApiConfig.GATEWAY_USER_ID_SCHEME)
 public class MeetingController {
@@ -52,6 +54,8 @@ public class MeetingController {
 	private final ListMeetingsUseCase listMeetingsUseCase;
 	private final ListMyMeetingsUseCase listMyMeetingsUseCase;
 	private final GetMeetingDetailUseCase getMeetingDetailUseCase;
+	private final CompleteMeetingUseCase completeMeetingUseCase;
+	private final DisbandMeetingUseCase disbandMeetingUseCase;
 
 	public MeetingController(
 			GatewayAuthenticationContextResolver authContextResolver,
@@ -59,7 +63,9 @@ public class MeetingController {
 			UploadMeetingCoverImageUseCase uploadMeetingCoverImageUseCase,
 			ListMeetingsUseCase listMeetingsUseCase,
 			ListMyMeetingsUseCase listMyMeetingsUseCase,
-			GetMeetingDetailUseCase getMeetingDetailUseCase
+			GetMeetingDetailUseCase getMeetingDetailUseCase,
+			CompleteMeetingUseCase completeMeetingUseCase,
+			DisbandMeetingUseCase disbandMeetingUseCase
 	) {
 		this.authContextResolver = authContextResolver;
 		this.createMeetingUseCase = createMeetingUseCase;
@@ -67,6 +73,8 @@ public class MeetingController {
 		this.listMeetingsUseCase = listMeetingsUseCase;
 		this.listMyMeetingsUseCase = listMyMeetingsUseCase;
 		this.getMeetingDetailUseCase = getMeetingDetailUseCase;
+		this.completeMeetingUseCase = completeMeetingUseCase;
+		this.disbandMeetingUseCase = disbandMeetingUseCase;
 	}
 
 	@GetMapping
@@ -146,6 +154,24 @@ public class MeetingController {
 		UUID actorMemberUuid = authContextResolver.requireUser().userId();
 		return ResponseEntity.ok(ApiResponse.success(MeetingResponse.from(
 				uploadMeetingCoverImageUseCase.upload(meetingUuid, actorMemberUuid, file)
+		)));
+	}
+
+	@PostMapping("/{meetingUuid}/complete")
+	@Operation(summary = "모임 완료. 채팅방은 유지되고 입력만 막힘 (chat ENDED)")
+	public ResponseEntity<ApiResponse<MeetingResponse>> complete(@PathVariable UUID meetingUuid) {
+		UUID hostMemberUuid = authContextResolver.requireUser().userId();
+		return ResponseEntity.ok(ApiResponse.success(MeetingResponse.from(
+				completeMeetingUseCase.complete(meetingUuid, hostMemberUuid)
+		)));
+	}
+
+	@PostMapping("/{meetingUuid}/disband")
+	@Operation(summary = "모임 해체. 공개 목록에서 제거하고 채팅방 삭제")
+	public ResponseEntity<ApiResponse<MeetingResponse>> disband(@PathVariable UUID meetingUuid) {
+		UUID hostMemberUuid = authContextResolver.requireUser().userId();
+		return ResponseEntity.ok(ApiResponse.success(MeetingResponse.from(
+				disbandMeetingUseCase.disband(meetingUuid, hostMemberUuid)
 		)));
 	}
 
