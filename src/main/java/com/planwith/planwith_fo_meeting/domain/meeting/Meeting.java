@@ -1,5 +1,6 @@
 package com.planwith.planwith_fo_meeting.domain.meeting;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -122,6 +123,79 @@ public class Meeting {
 				nextStatus,
 				thumbnailUrl,
 				bumpAt,
+				scheduleSnapshot,
+				createdAt,
+				now
+		);
+	}
+
+	public boolean isEditable() {
+		return status != MeetingStatus.DISBANDED && status != MeetingStatus.COMPLETED;
+	}
+
+	public Meeting withDetails(
+			UUID scheduleUuid,
+			String title,
+			String description,
+			int maxMemberCount,
+			MeetingStatus status,
+			ScheduleSnapshot scheduleSnapshot,
+			Instant now
+	) {
+		return new Meeting(
+				meetingId,
+				meetingUuid,
+				hostMemberUuid,
+				scheduleUuid,
+				title,
+				description,
+				maxMemberCount,
+				currentMemberCount,
+				status,
+				thumbnailUrl,
+				bumpAt,
+				scheduleSnapshot,
+				createdAt,
+				now
+		);
+	}
+
+	public Meeting withRecruitmentStatus(MeetingStatus status, Instant now) {
+		return new Meeting(
+				meetingId,
+				meetingUuid,
+				hostMemberUuid,
+				scheduleUuid,
+				title,
+				description,
+				maxMemberCount,
+				currentMemberCount,
+				status,
+				thumbnailUrl,
+				bumpAt,
+				scheduleSnapshot,
+				createdAt,
+				now
+		);
+	}
+
+	public boolean canBumpAt(Instant now, Duration interval) {
+		return bumpAt == null || !bumpAt.plus(interval).isAfter(now);
+	}
+
+	public Meeting bump(Instant now) {
+		return new Meeting(
+				meetingId,
+				meetingUuid,
+				hostMemberUuid,
+				scheduleUuid,
+				title,
+				description,
+				maxMemberCount,
+				currentMemberCount,
+				status,
+				thumbnailUrl,
+				now,
 				scheduleSnapshot,
 				createdAt,
 				now

@@ -6,6 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,12 +26,17 @@ import com.planwith.planwith_fo_meeting.adapter.in.web.dto.MeetingListItemRespon
 import com.planwith.planwith_fo_meeting.adapter.in.web.dto.MeetingResponse;
 import com.planwith.planwith_fo_meeting.adapter.in.web.dto.MyMeetingsResponse;
 import com.planwith.planwith_fo_meeting.adapter.in.web.dto.PagedResponse;
+import com.planwith.planwith_fo_meeting.adapter.in.web.dto.RecruitmentStatusRequest;
+import com.planwith.planwith_fo_meeting.adapter.in.web.dto.UpdateMeetingRequest;
+import com.planwith.planwith_fo_meeting.application.port.in.BumpMeetingUseCase;
+import com.planwith.planwith_fo_meeting.application.port.in.ChangeMeetingRecruitmentStatusUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.CompleteMeetingUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.CreateMeetingUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.DisbandMeetingUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.GetMeetingDetailUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.ListMeetingsUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.ListMyMeetingsUseCase;
+import com.planwith.planwith_fo_meeting.application.port.in.UpdateMeetingUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.UploadMeetingCoverImageUseCase;
 import com.planwith.planwith_fo_meeting.config.OpenApiConfig;
 import com.planwith.planwith_fo_meeting.domain.meeting.MeetingStatus;
@@ -43,7 +49,7 @@ import jakarta.validation.Valid;
 @Validated
 @RestController
 @RequestMapping("/api/v1/meetings")
-@Tag(name = "meetings", description = "모임 생성·조회·완료·해체")
+@Tag(name = "meetings", description = "모임 생성·조회·수정·완료·해체")
 @SecurityRequirement(name = OpenApiConfig.BEARER_SCHEME)
 @SecurityRequirement(name = OpenApiConfig.GATEWAY_USER_ID_SCHEME)
 public class MeetingController {
@@ -54,6 +60,9 @@ public class MeetingController {
 	private final ListMeetingsUseCase listMeetingsUseCase;
 	private final ListMyMeetingsUseCase listMyMeetingsUseCase;
 	private final GetMeetingDetailUseCase getMeetingDetailUseCase;
+	private final UpdateMeetingUseCase updateMeetingUseCase;
+	private final ChangeMeetingRecruitmentStatusUseCase changeMeetingRecruitmentStatusUseCase;
+	private final BumpMeetingUseCase bumpMeetingUseCase;
 	private final CompleteMeetingUseCase completeMeetingUseCase;
 	private final DisbandMeetingUseCase disbandMeetingUseCase;
 
@@ -64,6 +73,9 @@ public class MeetingController {
 			ListMeetingsUseCase listMeetingsUseCase,
 			ListMyMeetingsUseCase listMyMeetingsUseCase,
 			GetMeetingDetailUseCase getMeetingDetailUseCase,
+			UpdateMeetingUseCase updateMeetingUseCase,
+			ChangeMeetingRecruitmentStatusUseCase changeMeetingRecruitmentStatusUseCase,
+			BumpMeetingUseCase bumpMeetingUseCase,
 			CompleteMeetingUseCase completeMeetingUseCase,
 			DisbandMeetingUseCase disbandMeetingUseCase
 	) {
@@ -73,6 +85,9 @@ public class MeetingController {
 		this.listMeetingsUseCase = listMeetingsUseCase;
 		this.listMyMeetingsUseCase = listMyMeetingsUseCase;
 		this.getMeetingDetailUseCase = getMeetingDetailUseCase;
+		this.updateMeetingUseCase = updateMeetingUseCase;
+		this.changeMeetingRecruitmentStatusUseCase = changeMeetingRecruitmentStatusUseCase;
+		this.bumpMeetingUseCase = bumpMeetingUseCase;
 		this.completeMeetingUseCase = completeMeetingUseCase;
 		this.disbandMeetingUseCase = disbandMeetingUseCase;
 	}
@@ -154,6 +169,46 @@ public class MeetingController {
 		UUID actorMemberUuid = authContextResolver.requireUser().userId();
 		return ResponseEntity.ok(ApiResponse.success(MeetingResponse.from(
 				uploadMeetingCoverImageUseCase.upload(meetingUuid, actorMemberUuid, file)
+		)));
+	}
+
+	@PatchMapping("/{meetingUuid}")
+	@Operation(summary = "모임 소개·일정·최대인원 수정")
+	public ResponseEntity<ApiResponse<MeetingResponse>> update(
+			@PathVariable UUID meetingUuid,
+			@Valid @RequestBody UpdateMeetingRequest request
+	) {
+		UUID hostMemberUuid = authContextResolver.requireUser().userId();
+		return ResponseEntity.ok(ApiResponse.success(MeetingResponse.from(
+				updateMeetingUseCase.update(new UpdateMeetingUseCase.Command(
+						meetingUuid,
+						hostMemberUuid,
+						request.scheduleUuid(),
+						request.title(),
+						request.intro(),
+						request.maxMemberCount()
+				))
+		)));
+	}
+
+	@PatchMapping("/{meetingUuid}/recruitment-status")
+	@Operation(summary = "모집중/모집완료 전환")
+	public ResponseEntity<ApiResponse<MeetingResponse>> changeRecruitmentStatus(
+			@PathVariable UUID meetingUuid,
+			@Valid @RequestBody RecruitmentStatusRequest request
+	) {
+		UUID hostMemberUuid = authContextResolver.requireUser().userId();
+		return ResponseEntity.ok(ApiResponse.success(MeetingResponse.from(
+				changeMeetingRecruitmentStatusUseCase.change(meetingUuid, hostMemberUuid, request.status())
+		)));
+	}
+
+	@PostMapping("/{meetingUuid}/bump")
+	@Operation(summary = "모임 끌어올리기")
+	public ResponseEntity<ApiResponse<MeetingResponse>> bump(@PathVariable UUID meetingUuid) {
+		UUID hostMemberUuid = authContextResolver.requireUser().userId();
+		return ResponseEntity.ok(ApiResponse.success(MeetingResponse.from(
+				bumpMeetingUseCase.bump(meetingUuid, hostMemberUuid)
 		)));
 	}
 
