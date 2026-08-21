@@ -11,8 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.planwith.planwith_fo_meeting.application.port.out.MeetingPage;
 import com.planwith.planwith_fo_meeting.application.port.out.MeetingRepositoryPort;
 import com.planwith.planwith_fo_meeting.domain.meeting.Meeting;
+import com.planwith.planwith_fo_meeting.domain.meeting.MeetingScope;
 import com.planwith.planwith_fo_meeting.domain.meeting.MeetingStatus;
 import com.planwith.planwith_fo_meeting.domain.meeting.ScheduleSnapshot;
+import com.planwith.planwith_fo_meeting.domain.participation.ParticipationStatus;
 
 @Component
 @Transactional
@@ -58,9 +60,34 @@ public class MeetingPersistenceAdapter implements MeetingRepositoryPort {
 	@Override
 	@Transactional(readOnly = true)
 	public MeetingPage searchPublic(MeetingStatus status, int page, int size) {
+		PageRequest pageRequest = pageRequest(page, size);
+		return toPage(meetingJpaRepository.searchPublic(status, pageRequest));
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public MeetingPage searchMine(UUID memberUuid, MeetingScope scope, MeetingStatus status, int page, int size) {
+		PageRequest pageRequest = pageRequest(page, size);
+		String member = memberUuid.toString();
+		Page<MeetingJpaEntity> result = switch (scope) {
+			case HOSTED -> meetingJpaRepository.searchHosted(member, status, pageRequest);
+			case JOINED -> meetingJpaRepository.searchByParticipation(
+					member, ParticipationStatus.APPROVED, true, status, pageRequest
+			);
+			case PENDING -> meetingJpaRepository.searchByParticipation(
+					member, ParticipationStatus.PENDING, false, status, pageRequest
+			);
+		};
+		return toPage(result);
+	}
+
+	private PageRequest pageRequest(int page, int size) {
 		int safePage = Math.max(page, 0);
 		int safeSize = Math.min(Math.max(size, 1), 50);
-		Page<MeetingJpaEntity> result = meetingJpaRepository.searchPublic(status, PageRequest.of(safePage, safeSize));
+		return PageRequest.of(safePage, safeSize);
+	}
+
+	private MeetingPage toPage(Page<MeetingJpaEntity> result) {
 		return new MeetingPage(
 				result.getContent().stream().map(this::toDomain).toList(),
 				result.getNumber(),

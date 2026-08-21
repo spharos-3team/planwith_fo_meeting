@@ -105,7 +105,7 @@ chat 스키마 (chat 서비스, meeting 아님):
 | ✅ | #1 | 모임 서비스 골격·공통 응답·Gateway Trust |
 | ✅ | #2 | 모임 생성 |
 | ✅ | #3 | 모임 목록·상세 조회 |
-| ⬜ Todo | #4 | 내 모임 조회 |
+| ✅ | #4 | 내 모임 조회 |
 | ✅ | #5 | 모임 신청·승인·거절 |
 | ⬜ Todo | #6 | 모임 수정·모집상태·끌어올리기 |
 | ⬜ Todo | #7 | 모임 완료·해체 |
@@ -125,7 +125,6 @@ chat 스키마 (chat 서비스, meeting 아님):
 
 | Issue | Method | Endpoint | 인증 | 설명 |
 | --- | --- | --- | --- | --- |
-| #4 | GET | `/api/v1/meetings/me` | O | 내 모임. `scope=hosted\|joined\|pending`, `status` 필터 |
 | #6 | PATCH | `/api/v1/meetings/{meetingUuid}` | O host | 소개·일정·최대인원 등 수정 (인원 검증) |
 | #6 | PATCH | `/api/v1/meetings/{meetingUuid}/recruitment-status` | O host | `RECRUITING` ↔ `FULL` |
 | #6 | POST | `/api/v1/meetings/{meetingUuid}/bump` | O host | 끌어올리기 (등급·6시간) |
@@ -199,6 +198,7 @@ chat 스키마 (chat 서비스, meeting 아님):
 | #5 | POST | `/api/v1/meetings/{meetingUuid}/applications/{memberUuid}/approve` | O host | 승인 → `APPROVED`. 정원 차면 `FULL`. `participation.changed` |
 | #5 | POST | `/api/v1/meetings/{meetingUuid}/applications/{memberUuid}/reject` | O host | 거절 → `REJECTED` |
 | #5 | GET | `/api/v1/meetings/{meetingUuid}/participation` | O | 내 참여 상태 |
+| #4 | GET | `/api/v1/meetings/me` | O | 내 모임. `scope=hosted\|joined\|pending`. 해체 제외, `FULL` 하단. hosted면 `canCreate=true` |
 
 ---
 

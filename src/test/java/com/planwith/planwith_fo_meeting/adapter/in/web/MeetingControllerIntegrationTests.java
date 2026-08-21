@@ -18,6 +18,12 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jayway.jsonpath.JsonPath;
+import com.planwith.planwith_fo_meeting.application.port.out.MeetingMemberRepositoryPort;
+import com.planwith.planwith_fo_meeting.application.port.out.MeetingRepositoryPort;
+import com.planwith.planwith_fo_meeting.domain.meeting.Meeting;
+import com.planwith.planwith_fo_meeting.domain.participation.MeetingMember;
+import com.planwith.planwith_fo_meeting.domain.participation.MeetingRole;
+import com.planwith.planwith_fo_meeting.domain.participation.ParticipationStatus;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -31,6 +37,12 @@ class MeetingControllerIntegrationTests {
 
 	@Autowired
 	private MockMvc mockMvc;
+
+	@Autowired
+	private MeetingRepositoryPort meetingRepositoryPort;
+
+	@Autowired
+	private MeetingMemberRepositoryPort meetingMemberRepositoryPort;
 
 	@Test
 	void createMeetingRequiresAuth() throws Exception {
@@ -166,6 +178,69 @@ class MeetingControllerIntegrationTests {
 		mockMvc.perform(get("/api/v1/meetings/{meetingUuid}", "33333333-3333-3333-3333-333333333333"))
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.error.code").value("MEETING_NOT_FOUND"));
+	}
+
+	@Test
+	void myMeetingsRequiresAuth() throws Exception {
+		mockMvc.perform(get("/api/v1/meetings/me"))
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.error.code").value("UNAUTHORIZED"));
+	}
+
+	@Test
+	void hostedEmptyListAllowsCreate() throws Exception {
+		mockMvc.perform(get("/api/v1/meetings/me").header("X-Auth-User-Id", HOST_UUID))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.content").isEmpty())
+				.andExpect(jsonPath("$.data.canCreate").value(true));
+	}
+
+	@Test
+	void hostedContainsCreatedMeetingSeparateFromJoined() throws Exception {
+		String meetingUuid = createMeeting(HOST_UUID);
+		mockMvc.perform(get("/api/v1/meetings/me").param("scope", "hosted").header("X-Auth-User-Id", HOST_UUID))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.totalElements").value(1))
+				.andExpect(jsonPath("$.data.content[0].meetingUuid").value(meetingUuid))
+				.andExpect(jsonPath("$.data.canCreate").value(true));
+		mockMvc.perform(get("/api/v1/meetings/me").param("scope", "joined").header("X-Auth-User-Id", HOST_UUID))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.content").isEmpty())
+				.andExpect(jsonPath("$.data.canCreate").value(false));
+	}
+
+	@Test
+	void pendingScopeReturnsOnlyPendingMembership() throws Exception {
+		String meetingUuid = createMeeting(HOST_UUID);
+		Meeting meeting = meetingRepositoryPort.findByMeetingUuid(java.util.UUID.fromString(meetingUuid)).orElseThrow();
+		meetingMemberRepositoryPort.save(new MeetingMember(
+				meeting.getMeetingId(),
+				java.util.UUID.fromString(OTHER_UUID),
+				MeetingRole.MEMBER,
+				ParticipationStatus.PENDING,
+				"함께 가고 싶어요",
+				java.time.Instant.parse("2026-08-20T00:00:00Z"),
+				null
+		));
+		mockMvc.perform(get("/api/v1/meetings/me").param("scope", "pending").header("X-Auth-User-Id", OTHER_UUID))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.totalElements").value(1))
+				.andExpect(jsonPath("$.data.content[0].meetingUuid").value(meetingUuid))
+				.andExpect(jsonPath("$.data.canCreate").value(false));
+		mockMvc.perform(get("/api/v1/meetings/me").param("scope", "joined").header("X-Auth-User-Id", OTHER_UUID))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.content").isEmpty());
+		mockMvc.perform(get("/api/v1/meetings/me").param("scope", "hosted").header("X-Auth-User-Id", OTHER_UUID))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.content").isEmpty())
+				.andExpect(jsonPath("$.data.canCreate").value(true));
+	}
+
+	@Test
+	void invalidMyMeetingScopeIsBadRequest() throws Exception {
+		mockMvc.perform(get("/api/v1/meetings/me").param("scope", "all").header("X-Auth-User-Id", HOST_UUID))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"));
 	}
 
 	private String createMeeting(String hostUuid) throws Exception {
