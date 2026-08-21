@@ -132,6 +132,52 @@ public class Meeting {
 		return hostMemberUuid.equals(memberUuid);
 	}
 
+	public boolean isDisbanded() {
+		return status == MeetingStatus.DISBANDED;
+	}
+
+	public boolean isCompleted() {
+		return status == MeetingStatus.COMPLETED;
+	}
+
+	public Meeting complete(Instant now) {
+		return new Meeting(
+				meetingId,
+				meetingUuid,
+				hostMemberUuid,
+				scheduleUuid,
+				title,
+				description,
+				maxMemberCount,
+				currentMemberCount,
+				MeetingStatus.COMPLETED,
+				thumbnailUrl,
+				bumpAt,
+				scheduleSnapshot,
+				createdAt,
+				now
+		);
+	}
+
+	public Meeting disband(Instant now) {
+		return new Meeting(
+				meetingId,
+				meetingUuid,
+				hostMemberUuid,
+				scheduleUuid,
+				title,
+				description,
+				maxMemberCount,
+				0,
+				MeetingStatus.DISBANDED,
+				thumbnailUrl,
+				bumpAt,
+				scheduleSnapshot,
+				createdAt,
+				now
+		);
+	}
+
 	public Long getMeetingId() {
 		return meetingId;
 	}
