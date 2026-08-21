@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.planwith.planwith_fo_meeting.domain.participation.MeetingMember;
+import com.planwith.planwith_fo_meeting.domain.participation.MeetingRole;
 import com.planwith.planwith_fo_meeting.domain.participation.ParticipationStatus;
 
 public interface MeetingMemberRepositoryPort {
@@ -19,4 +20,6 @@ public interface MeetingMemberRepositoryPort {
 	List<MeetingMember> findByMeetingIdAndStatus(Long meetingId, ParticipationStatus status);
 
 	List<MeetingMember> findByMeetingId(Long meetingId);
+
+	Optional<MeetingMember> findByMeetingIdAndRole(Long meetingId, MeetingRole role);
 }

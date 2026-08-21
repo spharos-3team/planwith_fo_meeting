@@ -23,6 +23,10 @@ class ErrorCodeTest {
 		assertThat(ErrorCode.BUMP_NOT_ALLOWED.status()).isEqualTo(HttpStatus.FORBIDDEN);
 		assertThat(ErrorCode.BUMP_TOO_SOON.status()).isEqualTo(HttpStatus.CONFLICT);
 		assertThat(ErrorCode.MEETING_ALREADY_COMPLETED.status()).isEqualTo(HttpStatus.CONFLICT);
+		assertThat(ErrorCode.NOT_MEETING_PARTICIPANT.status()).isEqualTo(HttpStatus.FORBIDDEN);
+		assertThat(ErrorCode.HOST_CANNOT_LEAVE.status()).isEqualTo(HttpStatus.FORBIDDEN);
+		assertThat(ErrorCode.CANNOT_KICK_HOST.status()).isEqualTo(HttpStatus.FORBIDDEN);
+		assertThat(ErrorCode.MEMBER_NOT_FOUND.status()).isEqualTo(HttpStatus.NOT_FOUND);
 		assertThat(ErrorCode.INTERNAL_SERVER_ERROR.status()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 }
