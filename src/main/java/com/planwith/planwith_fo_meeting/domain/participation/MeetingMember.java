@@ -43,6 +43,58 @@ public class MeetingMember {
 		);
 	}
 
+	public static MeetingMember apply(Long meetingId, UUID memberUuid, String message, Instant now) {
+		return new MeetingMember(
+				meetingId,
+				memberUuid,
+				MeetingRole.MEMBER,
+				ParticipationStatus.PENDING,
+				message,
+				now,
+				null
+		);
+	}
+
+	public MeetingMember reapply(String message, Instant now) {
+		return new MeetingMember(
+				meetingId,
+				memberUuid,
+				MeetingRole.MEMBER,
+				ParticipationStatus.PENDING,
+				message,
+				now,
+				null
+		);
+	}
+
+	public MeetingMember approve(Instant now) {
+		return new MeetingMember(
+				meetingId,
+				memberUuid,
+				role,
+				ParticipationStatus.APPROVED,
+				joinMessage,
+				joinAt,
+				now
+		);
+	}
+
+	public MeetingMember reject() {
+		return new MeetingMember(
+				meetingId,
+				memberUuid,
+				role,
+				ParticipationStatus.REJECTED,
+				joinMessage,
+				joinAt,
+				null
+		);
+	}
+
+	public boolean canReapply() {
+		return status == ParticipationStatus.REJECTED || status == ParticipationStatus.LEFT;
+	}
+
 	public Long getMeetingId() {
 		return meetingId;
 	}

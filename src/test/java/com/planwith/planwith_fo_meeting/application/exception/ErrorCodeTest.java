@@ -16,6 +16,9 @@ class ErrorCodeTest {
 		assertThat(ErrorCode.MEETING_NOT_FOUND.status()).isEqualTo(HttpStatus.NOT_FOUND);
 		assertThat(ErrorCode.SCHEDULE_REQUIRED.status()).isEqualTo(HttpStatus.BAD_REQUEST);
 		assertThat(ErrorCode.NOT_MEETING_HOST.status()).isEqualTo(HttpStatus.FORBIDDEN);
+		assertThat(ErrorCode.ALREADY_APPLIED.status()).isEqualTo(HttpStatus.CONFLICT);
+		assertThat(ErrorCode.MEETING_FULL.status()).isEqualTo(HttpStatus.CONFLICT);
+		assertThat(ErrorCode.APPLICATION_NOT_FOUND.status()).isEqualTo(HttpStatus.NOT_FOUND);
 		assertThat(ErrorCode.INTERNAL_SERVER_ERROR.status()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 }

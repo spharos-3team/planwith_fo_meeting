@@ -14,6 +14,7 @@ import com.planwith.planwith_fo_meeting.application.exception.BusinessException;
 import com.planwith.planwith_fo_meeting.application.exception.ErrorCode;
 import com.planwith.planwith_fo_meeting.application.port.out.MeetingMemberRepositoryPort;
 import com.planwith.planwith_fo_meeting.domain.participation.MeetingMember;
+import com.planwith.planwith_fo_meeting.domain.participation.ParticipationStatus;
 
 @Component
 @Transactional
@@ -34,7 +35,9 @@ public class MeetingMemberPersistenceAdapter implements MeetingMemberRepositoryP
 	public MeetingMember save(MeetingMember member) {
 		MeetingJpaEntity meeting = meetingJpaRepository.findById(member.getMeetingId())
 				.orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));
-		MeetingMemberJpaEntity entity = new MeetingMemberJpaEntity();
+		MeetingMemberJpaEntity entity = meetingMemberJpaRepository
+				.findByMeeting_MeetingIdAndMemberUuid(member.getMeetingId(), member.getMemberUuid().toString())
+				.orElseGet(MeetingMemberJpaEntity::new);
 		entity.setMeeting(meeting);
 		entity.setMemberUuid(member.getMemberUuid().toString());
 		entity.setRole(member.getRole());
@@ -42,8 +45,7 @@ public class MeetingMemberPersistenceAdapter implements MeetingMemberRepositoryP
 		entity.setJoinMessage(member.getJoinMessage());
 		entity.setJoinAt(member.getJoinAt());
 		entity.setJoinedAt(member.getJoinedAt());
-		MeetingMemberJpaEntity saved = meetingMemberJpaRepository.save(entity);
-		return toDomain(saved);
+		return toDomain(meetingMemberJpaRepository.save(entity));
 	}
 
 	@Override
@@ -62,6 +64,16 @@ public class MeetingMemberPersistenceAdapter implements MeetingMemberRepositoryP
 		}
 		return meetingMemberJpaRepository
 				.findByMeeting_MeetingIdInAndMemberUuid(meetingIds, memberUuid.toString())
+				.stream()
+				.map(this::toDomain)
+				.toList();
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<MeetingMember> findByMeetingIdAndStatus(Long meetingId, ParticipationStatus status) {
+		return meetingMemberJpaRepository
+				.findByMeeting_MeetingIdAndStatusOrderByJoinAtAsc(meetingId, status)
 				.stream()
 				.map(this::toDomain)
 				.toList();

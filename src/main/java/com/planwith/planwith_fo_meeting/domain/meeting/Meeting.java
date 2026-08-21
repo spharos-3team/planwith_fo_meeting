@@ -99,6 +99,35 @@ public class Meeting {
 		);
 	}
 
+	public boolean isRecruiting() {
+		return status == MeetingStatus.RECRUITING;
+	}
+
+	public boolean canAcceptJoin() {
+		return isRecruiting() && currentMemberCount < maxMemberCount;
+	}
+
+	public Meeting approveJoin(Instant now) {
+		int nextCount = currentMemberCount + 1;
+		MeetingStatus nextStatus = nextCount >= maxMemberCount ? MeetingStatus.FULL : status;
+		return new Meeting(
+				meetingId,
+				meetingUuid,
+				hostMemberUuid,
+				scheduleUuid,
+				title,
+				description,
+				maxMemberCount,
+				nextCount,
+				nextStatus,
+				thumbnailUrl,
+				bumpAt,
+				scheduleSnapshot,
+				createdAt,
+				now
+		);
+	}
+
 	public boolean isHost(UUID memberUuid) {
 		return hostMemberUuid.equals(memberUuid);
 	}
