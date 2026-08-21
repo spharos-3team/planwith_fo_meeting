@@ -111,6 +111,46 @@ public class MeetingMember {
 		);
 	}
 
+	public MeetingMember kick() {
+		return new MeetingMember(
+				meetingId,
+				memberUuid,
+				role,
+				ParticipationStatus.KICKED,
+				joinMessage,
+				joinAt,
+				joinedAt
+		);
+	}
+
+	public MeetingMember withRole(MeetingRole role) {
+		return new MeetingMember(
+				meetingId,
+				memberUuid,
+				role,
+				status,
+				joinMessage,
+				joinAt,
+				joinedAt
+		);
+	}
+
+	public boolean isApproved() {
+		return status == ParticipationStatus.APPROVED;
+	}
+
+	public boolean isHost() {
+		return role == MeetingRole.HOST;
+	}
+
+	public boolean isViceHost() {
+		return role == MeetingRole.VICE_HOST;
+	}
+
+	public boolean canManageMembers() {
+		return isApproved() && (isHost() || isViceHost());
+	}
+
 	public Long getMeetingId() {
 		return meetingId;
 	}

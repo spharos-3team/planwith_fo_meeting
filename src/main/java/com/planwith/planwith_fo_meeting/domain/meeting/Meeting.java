@@ -202,6 +202,30 @@ public class Meeting {
 		);
 	}
 
+	public Meeting removeParticipant(Instant now) {
+		int nextCount = Math.max(0, currentMemberCount - 1);
+		MeetingStatus nextStatus = status;
+		if (status == MeetingStatus.FULL && nextCount < maxMemberCount) {
+			nextStatus = MeetingStatus.RECRUITING;
+		}
+		return new Meeting(
+				meetingId,
+				meetingUuid,
+				hostMemberUuid,
+				scheduleUuid,
+				title,
+				description,
+				maxMemberCount,
+				nextCount,
+				nextStatus,
+				thumbnailUrl,
+				bumpAt,
+				scheduleSnapshot,
+				createdAt,
+				now
+		);
+	}
+
 	public boolean isHost(UUID memberUuid) {
 		return hostMemberUuid.equals(memberUuid);
 	}

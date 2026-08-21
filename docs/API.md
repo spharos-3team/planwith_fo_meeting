@@ -6,7 +6,7 @@
 > 공통 응답: `ApiResponse<T>`  
 > 호출 경로: `Frontend → Gateway(:8000) → Meeting(:8086)` (Access 검증은 Gateway)
 
-최종 갱신: 2026-08-21 (#6 수정·모집상태·끌어올리기)
+최종 갱신: 2026-08-21 (#8 구성원·부방장·강퇴·탈퇴)
 
 ---
 
@@ -109,7 +109,7 @@ chat 스키마 (chat 서비스, meeting 아님):
 | ✅ | #5 | 모임 신청·승인·거절 |
 | ✅ | #6 | 모임 수정·모집상태·끌어올리기 |
 | ✅ | #7 | 모임 완료·해체 |
-| ⬜ Todo | #8 | 구성원·부방장·강퇴·탈퇴 |
+| ✅ | #8 | 구성원·부방장·강퇴·탈퇴 |
 | ⬜ Todo | #11 | 채팅 서비스 연동 이벤트 발행 |
 | ➡ chat | #9 #10 | 채팅 API — **이 레포 아님** (chat 서비스) |
 
@@ -120,17 +120,6 @@ chat 스키마 (chat 서비스, meeting 아님):
 ## 예정 API
 
 인증: `O` Gateway 로그인 / `X` 비회원 가능 / `optional` 로그인하면 내 상태 포함
-
-### 구성원
-
-| Issue | Method | Endpoint | 인증 | 설명 |
-| --- | --- | --- | --- | --- |
-| #8 | GET | `/api/v1/meetings/{meetingUuid}/members` | O participant | 구성원 목록 (역할, 프로필 요약) |
-| #8 | GET | `/api/v1/meetings/{meetingUuid}/members/{memberUuid}` | O participant | 구성원 프로필 (member 공개 프로필 조회 또는 스냅샷) |
-| #8 | PUT | `/api/v1/meetings/{meetingUuid}/vice-host` | O host | 부방장 지정/변경 (1명) |
-| #8 | DELETE | `/api/v1/meetings/{meetingUuid}/vice-host` | O host | 부방장 해제 |
-| #8 | DELETE | `/api/v1/meetings/{meetingUuid}/members/me` | O joined | 탈퇴. 호스트 불가. `participation.changed` LEFT |
-| #8 | DELETE | `/api/v1/meetings/{meetingUuid}/members/{memberUuid}` | O host/vice | 강퇴 → `KICKED`. 재신청 불가. `participation.changed` |
 
 ### 채팅 연동 이벤트 (이 레포는 Producer만)
 
@@ -194,6 +183,12 @@ chat 스키마 (chat 서비스, meeting 아님):
 | #6 | POST | `/api/v1/meetings/{meetingUuid}/bump` | O host | 끌어올리기. 글로벌 트래블러·PLAN&WITH 마스터 stub, 6시간 간격 |
 | #7 | POST | `/api/v1/meetings/{meetingUuid}/complete` | O host | 모임 완료(`COMPLETED`). 공개 목록 기본 제외. 상세·채팅 입장 유지. `meeting.completed` → chat `ENDED`(입력 불가) |
 | #7 | POST | `/api/v1/meetings/{meetingUuid}/disband` | O host | 해체(`DISBANDED`). 전원 `LEFT`, 공개/상세 제외. `meeting.disbanded` → chat 방·메시지 삭제 |
+| #8 | GET | `/api/v1/meetings/{meetingUuid}/members` | O participant | 참여 중(`APPROVED`) 구성원 목록. 역할·프로필 요약. OpenFeign 없이 member stub |
+| #8 | GET | `/api/v1/meetings/{meetingUuid}/members/{memberUuid}` | O participant | 구성원 프로필 |
+| #8 | PUT | `/api/v1/meetings/{meetingUuid}/vice-host` | O host | 부방장 지정/변경 (1명). 기존 부방장은 `MEMBER`로 강등. `vice-host.changed` |
+| #8 | DELETE | `/api/v1/meetings/{meetingUuid}/vice-host` | O host | 부방장 해제. `vice-host.changed` |
+| #8 | DELETE | `/api/v1/meetings/{meetingUuid}/members/me` | O joined | 탈퇴. 호스트 불가. `LEFT`, 정원 여유 시 `FULL`→`RECRUITING`. `participation.changed` |
+| #8 | DELETE | `/api/v1/meetings/{meetingUuid}/members/{memberUuid}` | O host/vice | 강퇴 → `KICKED`. 재신청·상세 불가. `participation.changed` |
 
 ---
 

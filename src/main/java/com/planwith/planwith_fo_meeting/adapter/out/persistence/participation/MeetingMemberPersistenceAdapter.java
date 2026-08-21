@@ -14,6 +14,7 @@ import com.planwith.planwith_fo_meeting.application.exception.BusinessException;
 import com.planwith.planwith_fo_meeting.application.exception.ErrorCode;
 import com.planwith.planwith_fo_meeting.application.port.out.MeetingMemberRepositoryPort;
 import com.planwith.planwith_fo_meeting.domain.participation.MeetingMember;
+import com.planwith.planwith_fo_meeting.domain.participation.MeetingRole;
 import com.planwith.planwith_fo_meeting.domain.participation.ParticipationStatus;
 
 @Component
@@ -87,6 +88,12 @@ public class MeetingMemberPersistenceAdapter implements MeetingMemberRepositoryP
 				.stream()
 				.map(this::toDomain)
 				.toList();
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Optional<MeetingMember> findByMeetingIdAndRole(Long meetingId, MeetingRole role) {
+		return meetingMemberJpaRepository.findByMeeting_MeetingIdAndRole(meetingId, role).map(this::toDomain);
 	}
 
 	private MeetingMember toDomain(MeetingMemberJpaEntity saved) {

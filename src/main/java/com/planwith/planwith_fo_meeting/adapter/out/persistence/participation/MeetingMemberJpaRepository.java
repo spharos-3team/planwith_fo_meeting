@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.planwith.planwith_fo_meeting.domain.participation.MeetingRole;
 import com.planwith.planwith_fo_meeting.domain.participation.ParticipationStatus;
 
 public interface MeetingMemberJpaRepository extends JpaRepository<MeetingMemberJpaEntity, Long> {
@@ -20,4 +21,6 @@ public interface MeetingMemberJpaRepository extends JpaRepository<MeetingMemberJ
 	);
 
 	List<MeetingMemberJpaEntity> findByMeeting_MeetingId(Long meetingId);
+
+	Optional<MeetingMemberJpaEntity> findByMeeting_MeetingIdAndRole(Long meetingId, MeetingRole role);
 }
