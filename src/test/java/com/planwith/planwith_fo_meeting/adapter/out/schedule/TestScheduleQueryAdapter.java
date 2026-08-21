@@ -18,11 +18,15 @@ public class TestScheduleQueryAdapter implements ScheduleQueryPort {
 	static final String DESTINATION = "부산";
 	static final LocalDate START_DATE = LocalDate.of(2026, 9, 1);
 	static final LocalDate END_DATE = LocalDate.of(2026, 9, 3);
+	static final UUID OTHER_SCHEDULE_UUID = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
 	@Override
 	public ScheduleSnapshot requireSchedule(UUID scheduleUuid) {
 		if (scheduleUuid == null) {
 			throw new BusinessException(ErrorCode.SCHEDULE_REQUIRED);
+		}
+		if (OTHER_SCHEDULE_UUID.equals(scheduleUuid)) {
+			return new ScheduleSnapshot(scheduleUuid, "제주", LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 5));
 		}
 		return new ScheduleSnapshot(scheduleUuid, DESTINATION, START_DATE, END_DATE);
 	}

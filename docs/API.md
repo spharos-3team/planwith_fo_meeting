@@ -6,7 +6,7 @@
 > 공통 응답: `ApiResponse<T>`  
 > 호출 경로: `Frontend → Gateway(:8000) → Meeting(:8086)` (Access 검증은 Gateway)
 
-최종 갱신: 2026-08-21 (#7 모임 완료·해체)
+최종 갱신: 2026-08-21 (#6 수정·모집상태·끌어올리기)
 
 ---
 
@@ -107,7 +107,7 @@ chat 스키마 (chat 서비스, meeting 아님):
 | ✅ | #3 | 모임 목록·상세 조회 |
 | ✅ | #4 | 내 모임 조회 |
 | ✅ | #5 | 모임 신청·승인·거절 |
-| ⬜ Todo | #6 | 모임 수정·모집상태·끌어올리기 |
+| ✅ | #6 | 모임 수정·모집상태·끌어올리기 |
 | ✅ | #7 | 모임 완료·해체 |
 | ⬜ Todo | #8 | 구성원·부방장·강퇴·탈퇴 |
 | ⬜ Todo | #11 | 채팅 서비스 연동 이벤트 발행 |
@@ -120,14 +120,6 @@ chat 스키마 (chat 서비스, meeting 아님):
 ## 예정 API
 
 인증: `O` Gateway 로그인 / `X` 비회원 가능 / `optional` 로그인하면 내 상태 포함
-
-### 모임
-
-| Issue | Method | Endpoint | 인증 | 설명 |
-| --- | --- | --- | --- | --- |
-| #6 | PATCH | `/api/v1/meetings/{meetingUuid}` | O host | 소개·일정·최대인원 등 수정 (인원 검증) |
-| #6 | PATCH | `/api/v1/meetings/{meetingUuid}/recruitment-status` | O host | `RECRUITING` ↔ `FULL` |
-| #6 | POST | `/api/v1/meetings/{meetingUuid}/bump` | O host | 끌어올리기 (등급·6시간) |
 
 ### 구성원
 
@@ -197,6 +189,9 @@ chat 스키마 (chat 서비스, meeting 아님):
 | #5 | POST | `/api/v1/meetings/{meetingUuid}/applications/{memberUuid}/reject` | O host | 거절 → `REJECTED` |
 | #5 | GET | `/api/v1/meetings/{meetingUuid}/participation` | O | 내 참여 상태 |
 | #4 | GET | `/api/v1/meetings/me` | O | 내 모임. `scope=hosted\|joined\|pending`. 해체 제외, `FULL` 하단. hosted면 `canCreate=true` |
+| #6 | PATCH | `/api/v1/meetings/{meetingUuid}` | O host | 소개·일정·최대인원 수정. 일정 스냅샷(장소·기간) 재복사. 현재 인원보다 작은 최대인원 불가. `meeting.updated` |
+| #6 | PATCH | `/api/v1/meetings/{meetingUuid}/recruitment-status` | O host | `RECRUITING` ↔ `FULL`. 정원 가득이면 모집중 재개 불가 |
+| #6 | POST | `/api/v1/meetings/{meetingUuid}/bump` | O host | 끌어올리기. 글로벌 트래블러·PLAN&WITH 마스터 stub, 6시간 간격 |
 | #7 | POST | `/api/v1/meetings/{meetingUuid}/complete` | O host | 모임 완료(`COMPLETED`). 공개 목록 기본 제외. 상세·채팅 입장 유지. `meeting.completed` → chat `ENDED`(입력 불가) |
 | #7 | POST | `/api/v1/meetings/{meetingUuid}/disband` | O host | 해체(`DISBANDED`). 전원 `LEFT`, 공개/상세 제외. `meeting.disbanded` → chat 방·메시지 삭제 |
 

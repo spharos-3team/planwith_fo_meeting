@@ -15,6 +15,7 @@ public record MeetingResponse(
 		int currentMemberCount,
 		String status,
 		String coverImage,
+		Instant bumpAt,
 		Instant createdAt
 ) {
 
@@ -29,6 +30,7 @@ public record MeetingResponse(
 				meeting.getCurrentMemberCount(),
 				meeting.getStatus().name(),
 				meeting.getThumbnailUrl(),
+				meeting.getBumpAt(),
 				meeting.getCreatedAt()
 		);
 	}
