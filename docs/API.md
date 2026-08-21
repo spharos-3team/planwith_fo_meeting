@@ -6,7 +6,7 @@
 > 공통 응답: `ApiResponse<T>`  
 > 호출 경로: `Frontend → Gateway(:8000) → Meeting(:8086)` (Access 검증은 Gateway)
 
-최종 갱신: 2026-08-21 (#8 구성원·부방장·강퇴·탈퇴)
+최종 갱신: 2026-08-21 (#11 채팅 연동 이벤트 발행)
 
 ---
 
@@ -110,7 +110,7 @@ chat 스키마 (chat 서비스, meeting 아님):
 | ✅ | #6 | 모임 수정·모집상태·끌어올리기 |
 | ✅ | #7 | 모임 완료·해체 |
 | ✅ | #8 | 구성원·부방장·강퇴·탈퇴 |
-| ⬜ Todo | #11 | 채팅 서비스 연동 이벤트 발행 |
+| ✅ | #11 | 채팅 서비스 연동 이벤트 발행 |
 | ➡ chat | #9 #10 | 채팅 API — **이 레포 아님** (chat 서비스) |
 
 작업 순서: `#1 → #2 → #3 → #4` 이후 `#5/#8` 과 `#6/#7` 병렬. 채팅 연동 `#11` 은 `#2`와 같이. 채팅 REST/SSE는 chat 레포.
@@ -121,18 +121,22 @@ chat 스키마 (chat 서비스, meeting 아님):
 
 인증: `O` Gateway 로그인 / `X` 비회원 가능 / `optional` 로그인하면 내 상태 포함
 
-### 채팅 연동 이벤트 (이 레포는 Producer만)
-
-| Issue | eventType | 언제 | chat가 하는 일 |
-| --- | --- | --- | --- |
-| #11 | `meeting.created` | 모임 생성 | `chat_rooms` 생성, 호스트 `APPROVED` |
-| #11 | `meeting.completed` | 모임 완료 | `chat_rooms.status=ENDED` |
-| #11 | `meeting.disbanded` | 모임 해체 | 방·멤버·Mongo 메시지 삭제 |
-| #11 | `meeting.participation.changed` | 신청/승인/거절/탈퇴/강퇴 | `chat_members.status` 동기화 |
-| #11 | `meeting.updated` | 모임 수정 | 신청자·참여자 알림 (채팅 내용 제외) |
-| #11 | `meeting.vice-host.changed` | 부방장 지정/해제/변경 | chat 관리 권한 + 등업 알림 |
-
 채팅 REST/SSE (`/api/v1/chat-rooms/**`) 는 chat 서비스 이슈. 이 레포의 #9 #10 은 닫는다.
+
+### 채팅 연동 이벤트 (이 레포는 Producer만, Kafka `EventEnvelope`)
+
+| Issue | eventType | 언제 | payload | chat가 하는 일 |
+| --- | --- | --- | --- | --- |
+| #11 | `meeting.created` | 모임 생성 | meetingUuid, hostMemberUuid, title | `chat_rooms` 생성, 호스트 `APPROVED` |
+| #11 | `meeting.completed` | 모임 완료 | meetingUuid | `chat_rooms.status=ENDED` |
+| #11 | `meeting.disbanded` | 모임 해체 | meetingUuid | 방·멤버·Mongo 메시지 삭제 |
+| #11 | `meeting.participation.changed` | 신청/승인/거절/탈퇴/강퇴 | meetingUuid, memberUuid, status | `chat_members.status` 동기화 |
+| #11 | `meeting.updated` | 모임 수정 | meetingUuid, hostMemberUuid | 신청자·참여자 알림 (채팅 내용 제외) |
+| #11 | `meeting.vice-host.changed` | 부방장 지정/해제/변경 | meetingUuid, viceHostMemberUuid | chat 관리 권한 + 등업 알림 |
+
+Envelope: `eventId`, `eventType`, `occurredAt`, `aggregateId`(meetingUuid), `version`, `payload`. 토큰·비밀번호 없음.  
+토픽: `planwith.meeting.{created|completed|disbanded|participation.changed|updated|vice-host.changed}`.  
+로컬/테스트는 `MEETING_KAFKA_ENABLED=false`(로그 NoOp). 운영은 `true`. 발행 실패는 producer 재시도 후 로그만. DLT는 chat consumer.
 
 상태 매핑 (PDF → API): `ing`→`RECRUITING`, `pull`(모집 중단/다 참)→`FULL`, `finish`→`COMPLETED`, `delete`→`DISBANDED`.  
 참여: 대기=`PENDING`, 참여=`APPROVED`, 거절=`REJECTED`, 퇴장=`LEFT`, 강퇴=`KICKED`.

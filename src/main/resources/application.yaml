@@ -15,6 +15,15 @@ spring:
           time_zone: UTC
   jackson:
     time-zone: UTC
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      acks: all
+      retries: 3
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    listener:
+      auto-startup: false
   lifecycle:
     timeout-per-shutdown-phase: 30s
 
@@ -51,6 +60,9 @@ management:
     web:
       exposure:
         include: health,info
+  health:
+    kafka:
+      enabled: ${MEETING_KAFKA_ENABLED:false}
 
 app:
   gateway:
@@ -62,3 +74,11 @@ app:
     pw: ${LOGIN_PASSWORD:1234}
   deploy:
     marker: ${DEPLOY_MARKER:planwith-fo-meeting-deploy-v1}
+  kafka:
+    enabled: ${MEETING_KAFKA_ENABLED:false}
+    created-topic: ${MEETING_TOPIC_CREATED:planwith.meeting.created}
+    completed-topic: ${MEETING_TOPIC_COMPLETED:planwith.meeting.completed}
+    disbanded-topic: ${MEETING_TOPIC_DISBANDED:planwith.meeting.disbanded}
+    participation-changed-topic: ${MEETING_TOPIC_PARTICIPATION_CHANGED:planwith.meeting.participation.changed}
+    updated-topic: ${MEETING_TOPIC_UPDATED:planwith.meeting.updated}
+    vice-host-changed-topic: ${MEETING_TOPIC_VICE_HOST_CHANGED:planwith.meeting.vice-host.changed}
