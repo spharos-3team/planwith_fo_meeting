@@ -106,7 +106,7 @@ chat 스키마 (chat 서비스, meeting 아님):
 | ✅ | #2 | 모임 생성 |
 | ✅ | #3 | 모임 목록·상세 조회 |
 | ⬜ Todo | #4 | 내 모임 조회 |
-| ⬜ Todo | #5 | 모임 신청·승인·거절 |
+| ✅ | #5 | 모임 신청·승인·거절 |
 | ⬜ Todo | #6 | 모임 수정·모집상태·끌어올리기 |
 | ⬜ Todo | #7 | 모임 완료·해체 |
 | ⬜ Todo | #8 | 구성원·부방장·강퇴·탈퇴 |
@@ -131,16 +131,6 @@ chat 스키마 (chat 서비스, meeting 아님):
 | #6 | POST | `/api/v1/meetings/{meetingUuid}/bump` | O host | 끌어올리기 (등급·6시간) |
 | #7 | POST | `/api/v1/meetings/{meetingUuid}/complete` | O host | 완료. `meeting.completed` → chat `ENDED` |
 | #7 | POST | `/api/v1/meetings/{meetingUuid}/disband` | O host | 해체. `meeting.disbanded` → chat 방·메시지 삭제 |
-
-### 신청·참여
-
-| Issue | Method | Endpoint | 인증 | 설명 |
-| --- | --- | --- | --- | --- |
-| #5 | POST | `/api/v1/meetings/{meetingUuid}/applications` | O | 신청 (`message`). 상태 `PENDING`. 강퇴 회원 거부 |
-| #5 | GET | `/api/v1/meetings/{meetingUuid}/applications` | O host | 승인 대기 목록 + 신청 메시지 |
-| #5 | POST | `/api/v1/meetings/{meetingUuid}/applications/{applicationUuid}/approve` | O host | 승인 → `APPROVED` + `participation.changed` |
-| #5 | POST | `/api/v1/meetings/{meetingUuid}/applications/{applicationUuid}/reject` | O host | 거절 → `REJECTED` + `participation.changed` |
-| #5 | GET | `/api/v1/meetings/{meetingUuid}/participation` | O | 내 참여 상태 |
 
 ### 구성원
 
@@ -204,6 +194,11 @@ chat 스키마 (chat 서비스, meeting 아님):
 | #2 | POST | `/api/v1/meetings/{meetingUuid}/cover-image` | O host | 대표 이미지 stub `stub://meetings/{uuid}.ext` |
 | #3 | GET | `/api/v1/meetings` | X | 카드: 사진·제목·인원·소개·목적지·기간 스냅샷. `page`/`size`. 해체·완료 제외 |
 | #3 | GET | `/api/v1/meetings/{meetingUuid}` | optional | 모임 상세(사진·제목·인원·소개·`scheduleUuid`). 강퇴 403, 해체 404. 여행 기간·비용 등은 schedule |
+| #5 | POST | `/api/v1/meetings/{meetingUuid}/applications` | O | 신청. `PENDING`. 강퇴 재신청 불가. 거절/탈퇴 후 재신청 가능 |
+| #5 | GET | `/api/v1/meetings/{meetingUuid}/applications` | O host | 승인 대기 목록 + 신청 메시지 |
+| #5 | POST | `/api/v1/meetings/{meetingUuid}/applications/{memberUuid}/approve` | O host | 승인 → `APPROVED`. 정원 차면 `FULL`. `participation.changed` |
+| #5 | POST | `/api/v1/meetings/{meetingUuid}/applications/{memberUuid}/reject` | O host | 거절 → `REJECTED` |
+| #5 | GET | `/api/v1/meetings/{meetingUuid}/participation` | O | 내 참여 상태 |
 
 ---
 
