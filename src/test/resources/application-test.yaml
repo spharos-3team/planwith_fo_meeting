@@ -14,6 +14,13 @@ spring:
           time_zone: UTC
   jackson:
     time-zone: UTC
+  kafka:
+    bootstrap-servers: localhost:9092
+    listener:
+      auto-startup: false
+    admin:
+      auto-create: false
+      fail-fast: false
 
 eureka:
   client:
@@ -24,8 +31,18 @@ app:
     internal-token: test-gateway-token
     trust-check-enabled: false
     public-url: /
+  kafka:
+    enabled: false
+    created-topic: planwith.meeting.created
+    completed-topic: planwith.meeting.completed
+    disbanded-topic: planwith.meeting.disbanded
+    participation-changed-topic: planwith.meeting.participation.changed
+    updated-topic: planwith.meeting.updated
+    vice-host-changed-topic: planwith.meeting.vice-host.changed
 
 management:
   health:
     diskspace:
+      enabled: false
+    kafka:
       enabled: false
