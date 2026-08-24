@@ -1,5 +1,6 @@
 package com.planwith.planwith_fo_meeting.adapter.in.web;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 import org.springframework.http.MediaType;
@@ -93,13 +94,23 @@ public class MeetingController {
 	}
 
 	@GetMapping
-	@Operation(summary = "모임 목록 카드. 일정은 생성 시 스냅샷. page/size, 기본 해체·완료 제외")
+	@Operation(summary = "모임 목록 카드. destination·from·to 필터. 일정은 생성 시 스냅샷. page/size, 기본 해체·완료 제외")
 	public ResponseEntity<ApiResponse<PagedResponse<MeetingListItemResponse>>> list(
 			@RequestParam(required = false) MeetingStatus status,
+			@RequestParam(required = false) String destination,
+			@RequestParam(required = false) LocalDate from,
+			@RequestParam(required = false) LocalDate to,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "20") int size
 	) {
-		ListMeetingsUseCase.Result result = listMeetingsUseCase.list(status, page, size);
+		ListMeetingsUseCase.Result result = listMeetingsUseCase.list(new ListMeetingsUseCase.Command(
+				status,
+				destination,
+				from,
+				to,
+				page,
+				size
+		));
 		PagedResponse<MeetingListItemResponse> body = new PagedResponse<>(
 				result.content().stream().map(MeetingListItemResponse::from).toList(),
 				result.page(),
