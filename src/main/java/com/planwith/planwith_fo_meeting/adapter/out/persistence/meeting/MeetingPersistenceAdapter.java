@@ -1,5 +1,6 @@
 package com.planwith.planwith_fo_meeting.adapter.out.persistence.meeting;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -59,9 +60,16 @@ public class MeetingPersistenceAdapter implements MeetingRepositoryPort {
 
 	@Override
 	@Transactional(readOnly = true)
-	public MeetingPage searchPublic(MeetingStatus status, int page, int size) {
+	public MeetingPage searchPublic(
+			MeetingStatus status,
+			String destination,
+			LocalDate from,
+			LocalDate to,
+			int page,
+			int size
+	) {
 		PageRequest pageRequest = pageRequest(page, size);
-		return toPage(meetingJpaRepository.searchPublic(status, pageRequest));
+		return toPage(meetingJpaRepository.searchPublic(status, destination, from, to, pageRequest));
 	}
 
 	@Override

@@ -6,7 +6,7 @@
 > 공통 응답: `ApiResponse<T>`  
 > 호출 경로: `Frontend → Gateway(:8000) → Meeting(:8086)` (Access 검증은 Gateway)
 
-최종 갱신: 2026-08-21 (#11 채팅 연동 이벤트 발행)
+최종 갱신: 2026-08-24 (#24 모임 목록 지역·날짜 필터)
 
 ---
 
@@ -90,6 +90,7 @@ chat 스키마 (chat 서비스, meeting 아님):
 - 끌어올리기: 글로벌 트래블러·PLAN&WITH 마스터, **6시간** 간격
 - 목록 정렬: `bump_at` 최신 → `created_at` 최신. **모집완료(`FULL`)는 하단**. 한 페이지 20개
 - 목록 카드 스냅샷: 생성 시 schedule에서 `destination`, `start_date`, `end_date`를 meetings에 복사. 목록은 일정 서비스를 호출하지 않음
+- 공개 목록 필터: `destination`(정확 일치), `from`/`to`(LocalDate, 여행 기간 겹침). 내 모임(`/me`)에는 적용하지 않음. `from` > `to` 는 `INVALID_REQUEST`
 - 정원 가득 승인 시 자동 `FULL`. 인원 빠지면(나가기) 다시 `RECRUITING` 가능 (PDF: 모집 중단 = 다 찼음, 빠지면 입장 가능)
 - 거절(`REJECTED`)·나가기(`LEFT`) 후 **재신청 가능**. 강퇴(`KICKED`)만 재신청·상세 진입 불가
 - 강퇴 회원: **내 모임 목록에서 제외**. 공개 목록 카드는 보이되 상세는 403
@@ -111,6 +112,7 @@ chat 스키마 (chat 서비스, meeting 아님):
 | ✅ | #7 | 모임 완료·해체 |
 | ✅ | #8 | 구성원·부방장·강퇴·탈퇴 |
 | ✅ | #11 | 채팅 서비스 연동 이벤트 발행 |
+| ✅ | #24 | 공개 목록 지역·날짜 필터 |
 | ➡ chat | #9 #10 | 채팅 API — **이 레포 아님** (chat 서비스) |
 
 작업 순서: `#1 → #2 → #3 → #4` 이후 `#5/#8` 과 `#6/#7` 병렬. 채팅 연동 `#11` 은 `#2`와 같이. 채팅 REST/SSE는 chat 레포.
@@ -149,7 +151,7 @@ Envelope: `eventId`, `eventType`, `occurredAt`, `aggregateId`(meetingUuid), `ver
 
 | PDF 커맨드 | meeting API | 비고 |
 | --- | --- | --- |
-| 모임 탭 / 목록 (최신순) | `GET /meetings` #3 | 카드 20개씩. 목적지·기간은 생성 시 스냅샷 |
+| 모임 탭 / 목록 (최신순) | `GET /meetings` #3 #24 | 카드 20개씩. 목적지·기간 스냅샷. 지역·날짜 필터 |
 | 내 모임 (만든/참여/대기) | `GET /meetings/me` #4 | 거절·강퇴는 이 리스트에 없음 |
 | 상세 (guest/host 버튼) | `GET /meetings/{uuid}` #3 | 모임 필드 + `scheduleUuid`. 여행 정보는 schedule |
 | 생성 (+채팅방 생성) | `POST /meetings` #2 + 이벤트 #11 | 일정 코드만. 기간·비용은 body에 넣지 않음 |
@@ -174,7 +176,7 @@ Envelope: `eventId`, `eventType`, `occurredAt`, `aggregateId`(meetingUuid), `ver
 | — | GET | `/api/planwith-fo-meeting/deploy-check` | X | 배포 확인 (스캐폴드) |
 | #2 | POST | `/api/v1/meetings` | O | 모임 생성. body는 `scheduleUuid`+제목+소개+최대인원(+커버). 일정 상세 필드는 받지 않음 |
 | #2 | POST | `/api/v1/meetings/{meetingUuid}/cover-image` | O host | 대표 이미지 stub `stub://meetings/{uuid}.ext` |
-| #3 | GET | `/api/v1/meetings` | X | 카드: 사진·제목·인원·소개·목적지·기간 스냅샷. `page`/`size`. 해체·완료 제외 |
+| #3 #24 | GET | `/api/v1/meetings` | X | 카드: 사진·제목·인원·소개·목적지·기간 스냅샷. `destination`, `from`, `to`, `status`, `page`/`size`. 해체·완료 제외 |
 | #3 | GET | `/api/v1/meetings/{meetingUuid}` | optional | 모임 상세(사진·제목·인원·소개·`scheduleUuid`). 강퇴 403, 해체 404. 여행 기간·비용 등은 schedule |
 | #5 | POST | `/api/v1/meetings/{meetingUuid}/applications` | O | 신청. `PENDING`. 강퇴 재신청 불가. 거절/탈퇴 후 재신청 가능 |
 | #5 | GET | `/api/v1/meetings/{meetingUuid}/applications` | O host | 승인 대기 목록 + 신청 메시지 |

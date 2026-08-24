@@ -34,6 +34,7 @@ class MeetingControllerIntegrationTests {
 	private static final String HOST_UUID = "11111111-1111-1111-1111-111111111111";
 	private static final String OTHER_UUID = "22222222-2222-2222-2222-222222222222";
 	private static final String SCHEDULE_UUID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+	private static final String OTHER_SCHEDULE_UUID = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -154,6 +155,55 @@ class MeetingControllerIntegrationTests {
 	}
 
 	@Test
+	void listFiltersByDestinationAndOverlappingDates() throws Exception {
+		String busanUuid = createMeeting(HOST_UUID, SCHEDULE_UUID);
+		String jejuUuid = createMeeting(HOST_UUID, OTHER_SCHEDULE_UUID);
+
+		mockMvc.perform(get("/api/v1/meetings").param("destination", "부산"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.totalElements").value(1))
+				.andExpect(jsonPath("$.data.content[0].meetingUuid").value(busanUuid))
+				.andExpect(jsonPath("$.data.content[0].destination").value("부산"));
+
+		mockMvc.perform(get("/api/v1/meetings").param("destination", "제주"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.totalElements").value(1))
+				.andExpect(jsonPath("$.data.content[0].meetingUuid").value(jejuUuid));
+
+		mockMvc.perform(get("/api/v1/meetings")
+						.param("from", "2026-09-02")
+						.param("to", "2026-09-02"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.totalElements").value(1))
+				.andExpect(jsonPath("$.data.content[0].meetingUuid").value(busanUuid));
+
+		mockMvc.perform(get("/api/v1/meetings").param("from", "2026-10-01"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.totalElements").value(1))
+				.andExpect(jsonPath("$.data.content[0].meetingUuid").value(jejuUuid));
+
+		mockMvc.perform(get("/api/v1/meetings")
+						.param("destination", "제주")
+						.param("from", "2026-09-01")
+						.param("to", "2026-09-03"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.totalElements").value(0));
+
+		mockMvc.perform(get("/api/v1/meetings").param("destination", " "))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.totalElements").value(2));
+	}
+
+	@Test
+	void listRejectsFromAfterTo() throws Exception {
+		mockMvc.perform(get("/api/v1/meetings")
+						.param("from", "2026-10-05")
+						.param("to", "2026-10-01"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"));
+	}
+
+	@Test
 	void hostDetailIncludesParticipationAndScheduleUuidOnly() throws Exception {
 		String meetingUuid = createMeeting(HOST_UUID);
 		mockMvc.perform(get("/api/v1/meetings/{meetingUuid}", meetingUuid)
@@ -244,16 +294,24 @@ class MeetingControllerIntegrationTests {
 	}
 
 	private String createMeeting(String hostUuid) throws Exception {
+		return createMeeting(hostUuid, SCHEDULE_UUID);
+	}
+
+	private String createMeeting(String hostUuid, String scheduleUuid) throws Exception {
 		MvcResult result = mockMvc.perform(post("/api/v1/meetings")
 						.header("X-Auth-User-Id", hostUuid)
 						.contentType(MediaType.APPLICATION_JSON)
-						.content(createBody()))
+						.content(createBody(scheduleUuid)))
 				.andExpect(status().isOk())
 				.andReturn();
 		return JsonPath.read(result.getResponse().getContentAsString(), "$.data.meetingUuid");
 	}
 
 	private String createBody() {
+		return createBody(SCHEDULE_UUID);
+	}
+
+	private String createBody(String scheduleUuid) {
 		return """
 				{
 				  "scheduleUuid": "%s",
@@ -261,6 +319,6 @@ class MeetingControllerIntegrationTests {
 				  "intro": "함께 가요",
 				  "maxMemberCount": 4
 				}
-				""".formatted(SCHEDULE_UUID);
+				""".formatted(scheduleUuid);
 	}
 }

@@ -1,5 +1,6 @@
 package com.planwith.planwith_fo_meeting.adapter.out.persistence.meeting;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -22,11 +23,20 @@ public interface MeetingJpaRepository extends JpaRepository<MeetingJpaEntity, Lo
 			        :status is not null and m.meetingStatus = :status
 			        or :status is null and m.meetingStatus <> com.planwith.planwith_fo_meeting.domain.meeting.MeetingStatus.COMPLETED
 			      )
+			  and (:destination is null or m.destination = :destination)
+			  and (:fromDate is null or m.endDate >= :fromDate)
+			  and (:toDate is null or m.startDate <= :toDate)
 			order by case when m.meetingStatus = com.planwith.planwith_fo_meeting.domain.meeting.MeetingStatus.FULL then 1 else 0 end,
 			         m.bumpAt desc nulls last,
 			         m.createdAt desc
 			""")
-	Page<MeetingJpaEntity> searchPublic(@Param("status") MeetingStatus status, Pageable pageable);
+	Page<MeetingJpaEntity> searchPublic(
+			@Param("status") MeetingStatus status,
+			@Param("destination") String destination,
+			@Param("fromDate") LocalDate fromDate,
+			@Param("toDate") LocalDate toDate,
+			Pageable pageable
+	);
 
 	@Query("""
 			select m from MeetingJpaEntity m

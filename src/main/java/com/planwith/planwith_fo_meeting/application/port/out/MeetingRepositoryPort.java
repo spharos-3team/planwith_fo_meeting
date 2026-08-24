@@ -1,5 +1,6 @@
 package com.planwith.planwith_fo_meeting.application.port.out;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,7 +14,14 @@ public interface MeetingRepositoryPort {
 
 	Optional<Meeting> findByMeetingUuid(UUID meetingUuid);
 
-	MeetingPage searchPublic(MeetingStatus status, int page, int size);
+	MeetingPage searchPublic(
+			MeetingStatus status,
+			String destination,
+			LocalDate from,
+			LocalDate to,
+			int page,
+			int size
+	);
 
 	MeetingPage searchMine(UUID memberUuid, MeetingScope scope, MeetingStatus status, int page, int size);
 }
