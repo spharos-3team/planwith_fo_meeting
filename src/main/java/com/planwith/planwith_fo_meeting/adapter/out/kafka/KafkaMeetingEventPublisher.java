@@ -48,9 +48,12 @@ public class KafkaMeetingEventPublisher {
 			log.error("Kafka meeting event serialize failed: eventType={} meetingUuid={}", eventType, meetingUuid);
 			return;
 		}
+		CompletableFuture.runAsync(() -> send(topic, meetingUuid, eventType, body));
+	}
+
+	private void send(String topic, UUID meetingUuid, String eventType, String body) {
 		try {
-			CompletableFuture<?> sendResult = kafkaTemplate.send(topic, meetingUuid.toString(), body);
-			sendResult.whenComplete((result, exception) -> {
+			kafkaTemplate.send(topic, meetingUuid.toString(), body).whenComplete((result, exception) -> {
 				if (exception != null) {
 					log.error(
 							"Kafka meeting event send failed (retry/DLT on broker-consumer): eventType={} topic={} meetingUuid={}",

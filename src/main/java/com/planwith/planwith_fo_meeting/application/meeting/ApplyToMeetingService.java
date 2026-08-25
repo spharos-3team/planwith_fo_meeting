@@ -2,6 +2,8 @@ package com.planwith.planwith_fo_meeting.application.meeting;
 
 import java.time.Instant;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -20,6 +22,8 @@ import com.planwith.planwith_fo_meeting.domain.participation.ParticipationStatus
 @Service
 public class ApplyToMeetingService implements ApplyToMeetingUseCase {
 
+	private static final Logger log = LoggerFactory.getLogger(ApplyToMeetingService.class);
+
 	private final MeetingRepositoryPort meetingRepositoryPort;
 	private final MeetingMemberRepositoryPort meetingMemberRepositoryPort;
 	private final MeetingParticipationChangedEventPort participationChangedEventPort;
@@ -37,6 +41,20 @@ public class ApplyToMeetingService implements ApplyToMeetingUseCase {
 	@Override
 	@Transactional
 	public MeetingMember apply(Command command) {
+		long started = System.nanoTime();
+		try {
+			return doApply(command);
+		}
+		finally {
+			log.info(
+					"apply elapsedMs={} meetingUuid={}",
+					(System.nanoTime() - started) / 1_000_000,
+					command.meetingUuid()
+			);
+		}
+	}
+
+	private MeetingMember doApply(Command command) {
 		Meeting meeting = meetingRepositoryPort.findByMeetingUuid(command.meetingUuid())
 				.filter(found -> found.getStatus() != MeetingStatus.DISBANDED)
 				.orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));

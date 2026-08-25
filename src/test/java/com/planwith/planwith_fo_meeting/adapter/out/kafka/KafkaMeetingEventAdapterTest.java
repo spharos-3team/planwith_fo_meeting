@@ -2,6 +2,7 @@ package com.planwith.planwith_fo_meeting.adapter.out.kafka;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -140,7 +141,7 @@ class KafkaMeetingEventAdapterTest {
 
 	private JsonNode capture(String topic, UUID meetingUuid) throws Exception {
 		ArgumentCaptor<String> payloadCaptor = ArgumentCaptor.forClass(String.class);
-		verify(kafkaTemplate).send(eq(topic), eq(meetingUuid.toString()), payloadCaptor.capture());
+		verify(kafkaTemplate, timeout(2000)).send(eq(topic), eq(meetingUuid.toString()), payloadCaptor.capture());
 		return objectMapper.readTree(payloadCaptor.getValue());
 	}
 
