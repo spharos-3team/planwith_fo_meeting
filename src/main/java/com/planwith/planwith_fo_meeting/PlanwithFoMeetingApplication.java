@@ -7,6 +7,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import com.planwith.planwith_fo_meeting.config.AuthProperties;
 import com.planwith.planwith_fo_meeting.config.DeployProperties;
 import com.planwith.planwith_fo_meeting.config.GatewayTrustProperties;
+import com.planwith.planwith_fo_meeting.config.LocalDotenvLoader;
 import com.planwith.planwith_fo_meeting.config.MeetingKafkaProperties;
 
 @SpringBootApplication
@@ -19,6 +20,7 @@ import com.planwith.planwith_fo_meeting.config.MeetingKafkaProperties;
 public class PlanwithFoMeetingApplication {
 
 	public static void main(String[] args) {
+		LocalDotenvLoader.load("planwith_fo_meeting");
 		SpringApplication.run(PlanwithFoMeetingApplication.class, args);
 	}
 }
