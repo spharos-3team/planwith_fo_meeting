@@ -27,16 +27,17 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       properties:
-        # Local NoOp never sends. Docker/KRaft topic auto-create needs more than 500ms.
-        max.block.ms: ${KAFKA_MAX_BLOCK_MS:30000}
-        request.timeout.ms: ${KAFKA_REQUEST_TIMEOUT_MS:20000}
-        delivery.timeout.ms: ${KAFKA_DELIVERY_TIMEOUT_MS:40000}
-        socket.connection.setup.timeout.ms: ${KAFKA_SOCKET_TIMEOUT_MS:10000}
+        # Do not bind these to env. meeting.env copied from local .env.example
+        # with 500ms would drop meeting.created before KRaft metadata is ready.
+        max.block.ms: 30000
+        request.timeout.ms: 20000
+        delivery.timeout.ms: 40000
+        socket.connection.setup.timeout.ms: 10000
     admin:
       fail-fast: false
       properties:
-        request.timeout.ms: ${KAFKA_ADMIN_TIMEOUT_MS:20000}
-        default.api.timeout.ms: ${KAFKA_ADMIN_TIMEOUT_MS:20000}
+        request.timeout.ms: 20000
+        default.api.timeout.ms: 20000
     listener:
       auto-startup: false
   lifecycle:

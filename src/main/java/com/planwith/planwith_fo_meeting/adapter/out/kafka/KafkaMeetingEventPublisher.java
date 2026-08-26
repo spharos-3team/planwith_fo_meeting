@@ -2,11 +2,12 @@ package com.planwith.planwith_fo_meeting.adapter.out.kafka;
 
 import java.time.Instant;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.env.Environment;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -26,15 +27,34 @@ public class KafkaMeetingEventPublisher {
 
 	private final KafkaTemplate<String, String> kafkaTemplate;
 	private final ObjectMapper objectMapper;
+	private final Environment environment;
 
 	public KafkaMeetingEventPublisher(KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper) {
+		this(kafkaTemplate, objectMapper, null);
+	}
+
+	@Autowired
+	public KafkaMeetingEventPublisher(
+			KafkaTemplate<String, String> kafkaTemplate,
+			ObjectMapper objectMapper,
+			Environment environment
+	) {
 		this.kafkaTemplate = kafkaTemplate;
 		this.objectMapper = objectMapper;
+		this.environment = environment;
 	}
 
 	@PostConstruct
 	void logProducerReady() {
-		log.info("Kafka meeting producer enabled");
+		String bootstrap = environment == null ? null : environment.getProperty("spring.kafka.bootstrap-servers");
+		String maxBlockMs = environment == null
+				? null
+				: environment.getProperty("spring.kafka.producer.properties.max.block.ms");
+		log.info(
+				"Kafka meeting producer enabled bootstrap={} maxBlockMs={}",
+				bootstrap,
+				maxBlockMs
+		);
 	}
 
 	public void publish(String topic, UUID meetingUuid, String eventType, Instant occurredAt, Object payload) {
@@ -73,12 +93,12 @@ public class KafkaMeetingEventPublisher {
 			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
 				@Override
 				public void afterCommit() {
-					CompletableFuture.runAsync(send);
+					send.run();
 				}
 			});
 			return;
 		}
-		CompletableFuture.runAsync(send);
+		send.run();
 	}
 
 	private void send(String topic, UUID meetingUuid, String eventType, String body) {
