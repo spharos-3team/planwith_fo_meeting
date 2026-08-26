@@ -15,6 +15,10 @@ spring:
           time_zone: UTC
   jackson:
     time-zone: UTC
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 3MB
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:127.0.0.1:9092}
     producer:
@@ -92,3 +96,5 @@ app:
     participation-changed-topic: ${MEETING_TOPIC_PARTICIPATION_CHANGED:planwith.meeting.participation.changed}
     updated-topic: ${MEETING_TOPIC_UPDATED:planwith.meeting.updated}
     vice-host-changed-topic: ${MEETING_TOPIC_VICE_HOST_CHANGED:planwith.meeting.vice-host.changed}
+  schedule:
+    base-url: ${SCHEDULE_SERVICE_URI:http://planwith-fo-schedule:8081}

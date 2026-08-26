@@ -14,6 +14,7 @@ class ErrorCodeTest {
 		assertThat(ErrorCode.UNAUTHORIZED.status()).isEqualTo(HttpStatus.UNAUTHORIZED);
 		assertThat(ErrorCode.FORBIDDEN.status()).isEqualTo(HttpStatus.FORBIDDEN);
 		assertThat(ErrorCode.MEETING_NOT_FOUND.status()).isEqualTo(HttpStatus.NOT_FOUND);
+		assertThat(ErrorCode.COVER_IMAGE_NOT_FOUND.status()).isEqualTo(HttpStatus.NOT_FOUND);
 		assertThat(ErrorCode.SCHEDULE_REQUIRED.status()).isEqualTo(HttpStatus.BAD_REQUEST);
 		assertThat(ErrorCode.NOT_MEETING_HOST.status()).isEqualTo(HttpStatus.FORBIDDEN);
 		assertThat(ErrorCode.ALREADY_APPLIED.status()).isEqualTo(HttpStatus.CONFLICT);

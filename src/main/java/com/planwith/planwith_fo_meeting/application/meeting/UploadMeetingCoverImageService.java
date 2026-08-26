@@ -1,5 +1,6 @@
 package com.planwith.planwith_fo_meeting.application.meeting;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Locale;
@@ -15,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.planwith.planwith_fo_meeting.application.exception.BusinessException;
 import com.planwith.planwith_fo_meeting.application.exception.ErrorCode;
 import com.planwith.planwith_fo_meeting.application.port.in.UploadMeetingCoverImageUseCase;
+import com.planwith.planwith_fo_meeting.application.port.out.CoverImageStoragePort;
 import com.planwith.planwith_fo_meeting.application.port.out.MeetingRepositoryPort;
 import com.planwith.planwith_fo_meeting.domain.meeting.Meeting;
 
@@ -30,9 +32,14 @@ public class UploadMeetingCoverImageService implements UploadMeetingCoverImageUs
 	);
 
 	private final MeetingRepositoryPort meetingRepositoryPort;
+	private final CoverImageStoragePort coverImageStoragePort;
 
-	public UploadMeetingCoverImageService(MeetingRepositoryPort meetingRepositoryPort) {
+	public UploadMeetingCoverImageService(
+			MeetingRepositoryPort meetingRepositoryPort,
+			CoverImageStoragePort coverImageStoragePort
+	) {
 		this.meetingRepositoryPort = meetingRepositoryPort;
+		this.coverImageStoragePort = coverImageStoragePort;
 	}
 
 	@Override
@@ -53,25 +60,37 @@ public class UploadMeetingCoverImageService implements UploadMeetingCoverImageUs
 		if (!ALLOWED_CONTENT_TYPES.contains(contentType)) {
 			throw new BusinessException(ErrorCode.INVALID_COVER_IMAGE, "jpg/jpeg/png/webp만 업로드할 수 있습니다.");
 		}
+		byte[] bytes;
+		try {
+			bytes = file.getBytes();
+		}
+		catch (IOException exception) {
+			throw new BusinessException(ErrorCode.INVALID_COVER_IMAGE);
+		}
 		if (!"image/webp".equals(contentType)) {
 			try {
-				if (ImageIO.read(file.getInputStream()) == null) {
+				if (ImageIO.read(new ByteArrayInputStream(bytes)) == null) {
 					throw new BusinessException(ErrorCode.INVALID_COVER_IMAGE);
 				}
 			}
-			catch (IOException exception) {
+			catch (BusinessException exception) {
+				throw exception;
+			}
+			catch (Exception exception) {
 				throw new BusinessException(ErrorCode.INVALID_COVER_IMAGE);
 			}
 		}
-		String stubUrl = "stub://meetings/" + meetingUuid + "." + extensionOf(contentType);
-		return meetingRepositoryPort.save(meeting.withThumbnailUrl(stubUrl, Instant.now()));
+		String storedType = storedContentType(contentType);
+		coverImageStoragePort.save(meetingUuid, storedType, bytes);
+		String publicUrl = "/api/v1/meetings/" + meetingUuid + "/cover-image";
+		return meetingRepositoryPort.save(meeting.withThumbnailUrl(publicUrl, Instant.now()));
 	}
 
-	private String extensionOf(String contentType) {
+	private String storedContentType(String contentType) {
 		return switch (contentType) {
-			case "image/png" -> "png";
-			case "image/webp" -> "webp";
-			default -> "jpg";
+			case "image/png" -> "image/png";
+			case "image/webp" -> "image/webp";
+			default -> "image/jpeg";
 		};
 	}
 }

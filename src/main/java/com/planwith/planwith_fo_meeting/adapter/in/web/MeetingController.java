@@ -33,6 +33,7 @@ import com.planwith.planwith_fo_meeting.application.port.in.ChangeMeetingRecruit
 import com.planwith.planwith_fo_meeting.application.port.in.CompleteMeetingUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.CreateMeetingUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.DisbandMeetingUseCase;
+import com.planwith.planwith_fo_meeting.application.port.in.GetMeetingCoverImageUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.GetMeetingDetailUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.ListMeetingsUseCase;
 import com.planwith.planwith_fo_meeting.application.port.in.ListMyMeetingsUseCase;
@@ -57,6 +58,7 @@ public class MeetingController {
 	private final GatewayAuthenticationContextResolver authContextResolver;
 	private final CreateMeetingUseCase createMeetingUseCase;
 	private final UploadMeetingCoverImageUseCase uploadMeetingCoverImageUseCase;
+	private final GetMeetingCoverImageUseCase getMeetingCoverImageUseCase;
 	private final ListMeetingsUseCase listMeetingsUseCase;
 	private final ListMyMeetingsUseCase listMyMeetingsUseCase;
 	private final GetMeetingDetailUseCase getMeetingDetailUseCase;
@@ -70,6 +72,7 @@ public class MeetingController {
 			GatewayAuthenticationContextResolver authContextResolver,
 			CreateMeetingUseCase createMeetingUseCase,
 			UploadMeetingCoverImageUseCase uploadMeetingCoverImageUseCase,
+			GetMeetingCoverImageUseCase getMeetingCoverImageUseCase,
 			ListMeetingsUseCase listMeetingsUseCase,
 			ListMyMeetingsUseCase listMyMeetingsUseCase,
 			GetMeetingDetailUseCase getMeetingDetailUseCase,
@@ -82,6 +85,7 @@ public class MeetingController {
 		this.authContextResolver = authContextResolver;
 		this.createMeetingUseCase = createMeetingUseCase;
 		this.uploadMeetingCoverImageUseCase = uploadMeetingCoverImageUseCase;
+		this.getMeetingCoverImageUseCase = getMeetingCoverImageUseCase;
 		this.listMeetingsUseCase = listMeetingsUseCase;
 		this.listMyMeetingsUseCase = listMyMeetingsUseCase;
 		this.getMeetingDetailUseCase = getMeetingDetailUseCase;
@@ -161,7 +165,7 @@ public class MeetingController {
 	}
 
 	@PostMapping(path = "/{meetingUuid}/cover-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	@Operation(summary = "모임 대표 이미지 업로드 (stub URL)")
+	@Operation(summary = "모임 대표 이미지 업로드")
 	public ResponseEntity<ApiResponse<MeetingResponse>> uploadCoverImage(
 			@PathVariable UUID meetingUuid,
 			@RequestPart("file") MultipartFile file
@@ -170,6 +174,15 @@ public class MeetingController {
 		return ResponseEntity.ok(ApiResponse.success(MeetingResponse.from(
 				uploadMeetingCoverImageUseCase.upload(meetingUuid, actorMemberUuid, file)
 		)));
+	}
+
+	@GetMapping(path = "/{meetingUuid}/cover-image")
+	@Operation(summary = "모임 대표 이미지 조회", security = {})
+	public ResponseEntity<byte[]> getCoverImage(@PathVariable UUID meetingUuid) {
+		GetMeetingCoverImageUseCase.Result cover = getMeetingCoverImageUseCase.get(meetingUuid);
+		return ResponseEntity.ok()
+				.contentType(MediaType.parseMediaType(cover.contentType()))
+				.body(cover.bytes());
 	}
 
 	@PatchMapping("/{meetingUuid}")
