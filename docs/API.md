@@ -174,7 +174,7 @@ Envelope: `eventId`, `eventType`, `occurredAt`, `aggregateId`(meetingUuid), `ver
 | — | GET | `/api/planwith-fo-meeting/deploy-check` | X | 배포 확인 (스캐폴드) |
 | #2 | POST | `/api/v1/meetings` | O | 모임 생성. body는 `scheduleUuid`+제목+소개+최대인원(+커버). 일정 상세 필드는 받지 않음 |
 | #2 | POST | `/api/v1/meetings/{meetingUuid}/cover-image` | O host | 대표 이미지 stub `stub://meetings/{uuid}.ext` |
-| #3 | GET | `/api/v1/meetings` | X | 카드: 사진·제목·인원·소개·목적지·기간 스냅샷. `page`/`size`. 해체·완료 제외 |
+| #3 | GET | `/api/v1/meetings` | X | 카드: 사진·제목·인원·소개·목적지·기간 스냅샷·상태·방장(`hostMemberUuid`, `hostNickname`). `page`/`size`. 해체·완료 제외 |
 | #3 | GET | `/api/v1/meetings/{meetingUuid}` | optional | 모임 상세(사진·제목·인원·소개·`scheduleUuid`). 강퇴 403, 해체 404. 여행 기간·비용 등은 schedule |
 | #5 | POST | `/api/v1/meetings/{meetingUuid}/applications` | O | 신청. `PENDING`. 강퇴 재신청 불가. 거절/탈퇴 후 재신청 가능 |
 | #5 | GET | `/api/v1/meetings/{meetingUuid}/applications` | O host | 승인 대기 목록 + 신청 메시지 |

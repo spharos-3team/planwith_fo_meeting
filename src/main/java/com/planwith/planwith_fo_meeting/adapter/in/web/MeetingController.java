@@ -61,6 +61,7 @@ public class MeetingController {
 	private final GetMeetingCoverImageUseCase getMeetingCoverImageUseCase;
 	private final ListMeetingsUseCase listMeetingsUseCase;
 	private final ListMyMeetingsUseCase listMyMeetingsUseCase;
+	private final MeetingListItemAssembler meetingListItemAssembler;
 	private final GetMeetingDetailUseCase getMeetingDetailUseCase;
 	private final UpdateMeetingUseCase updateMeetingUseCase;
 	private final ChangeMeetingRecruitmentStatusUseCase changeMeetingRecruitmentStatusUseCase;
@@ -75,6 +76,7 @@ public class MeetingController {
 			GetMeetingCoverImageUseCase getMeetingCoverImageUseCase,
 			ListMeetingsUseCase listMeetingsUseCase,
 			ListMyMeetingsUseCase listMyMeetingsUseCase,
+			MeetingListItemAssembler meetingListItemAssembler,
 			GetMeetingDetailUseCase getMeetingDetailUseCase,
 			UpdateMeetingUseCase updateMeetingUseCase,
 			ChangeMeetingRecruitmentStatusUseCase changeMeetingRecruitmentStatusUseCase,
@@ -88,6 +90,7 @@ public class MeetingController {
 		this.getMeetingCoverImageUseCase = getMeetingCoverImageUseCase;
 		this.listMeetingsUseCase = listMeetingsUseCase;
 		this.listMyMeetingsUseCase = listMyMeetingsUseCase;
+		this.meetingListItemAssembler = meetingListItemAssembler;
 		this.getMeetingDetailUseCase = getMeetingDetailUseCase;
 		this.updateMeetingUseCase = updateMeetingUseCase;
 		this.changeMeetingRecruitmentStatusUseCase = changeMeetingRecruitmentStatusUseCase;
@@ -105,7 +108,7 @@ public class MeetingController {
 	) {
 		ListMeetingsUseCase.Result result = listMeetingsUseCase.list(status, page, size);
 		PagedResponse<MeetingListItemResponse> body = new PagedResponse<>(
-				result.content().stream().map(MeetingListItemResponse::from).toList(),
+				meetingListItemAssembler.assemble(result.content()),
 				result.page(),
 				result.size(),
 				result.totalElements(),
@@ -131,7 +134,7 @@ public class MeetingController {
 				size
 		);
 		MyMeetingsResponse<MeetingListItemResponse> body = new MyMeetingsResponse<>(
-				result.content().stream().map(MeetingListItemResponse::from).toList(),
+				meetingListItemAssembler.assemble(result.content()),
 				result.page(),
 				result.size(),
 				result.totalElements(),

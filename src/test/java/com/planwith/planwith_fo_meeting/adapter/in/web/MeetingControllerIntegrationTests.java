@@ -203,6 +203,9 @@ class MeetingControllerIntegrationTests {
 				.andExpect(jsonPath("$.data.content[0].destination").value("부산"))
 				.andExpect(jsonPath("$.data.content[0].startDate").value("2026-09-01"))
 				.andExpect(jsonPath("$.data.content[0].endDate").value("2026-09-03"))
+				.andExpect(jsonPath("$.data.content[0].status").value("RECRUITING"))
+				.andExpect(jsonPath("$.data.content[0].hostMemberUuid").value(HOST_UUID))
+				.andExpect(jsonPath("$.data.content[0].hostNickname").value("닉네임-11111111"))
 				.andExpect(jsonPath("$.data.content[0].scheduleUuid").doesNotExist())
 				.andExpect(jsonPath("$.data.content[0].cost").doesNotExist())
 				.andExpect(jsonPath("$.data.content[0].canApply").doesNotExist());
