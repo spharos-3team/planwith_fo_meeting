@@ -9,10 +9,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.planwith.planwith_fo_meeting.adapter.out.kafka.dto.EventEnvelope;
+
+import jakarta.annotation.PostConstruct;
 
 @Component
 @ConditionalOnProperty(prefix = "app.kafka", name = "enabled", havingValue = "true")
@@ -26,6 +30,11 @@ public class KafkaMeetingEventPublisher {
 	public KafkaMeetingEventPublisher(KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper) {
 		this.kafkaTemplate = kafkaTemplate;
 		this.objectMapper = objectMapper;
+	}
+
+	@PostConstruct
+	void logProducerReady() {
+		log.info("Kafka meeting producer enabled");
 	}
 
 	public void publish(String topic, UUID meetingUuid, String eventType, Instant occurredAt, Object payload) {
@@ -45,10 +54,31 @@ public class KafkaMeetingEventPublisher {
 			body = objectMapper.writeValueAsString(envelope);
 		}
 		catch (JsonProcessingException exception) {
-			log.error("Kafka meeting event serialize failed: eventType={} meetingUuid={}", eventType, meetingUuid);
+			log.error(
+					"Kafka meeting event serialize failed: eventType={} meetingUuid={}",
+					eventType,
+					meetingUuid,
+					exception
+			);
 			return;
 		}
-		CompletableFuture.runAsync(() -> send(topic, meetingUuid, eventType, body));
+		enqueue(topic, meetingUuid, eventType, body);
+	}
+
+	private void enqueue(String topic, UUID meetingUuid, String eventType, String body) {
+		log.info("Kafka meeting event publishing: eventType={} topic={} meetingUuid={}", eventType, topic, meetingUuid);
+		Runnable send = () -> send(topic, meetingUuid, eventType, body);
+		if (TransactionSynchronizationManager.isSynchronizationActive()
+				&& TransactionSynchronizationManager.isActualTransactionActive()) {
+			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+				@Override
+				public void afterCommit() {
+					CompletableFuture.runAsync(send);
+				}
+			});
+			return;
+		}
+		CompletableFuture.runAsync(send);
 	}
 
 	private void send(String topic, UUID meetingUuid, String eventType, String body) {
@@ -56,10 +86,11 @@ public class KafkaMeetingEventPublisher {
 			kafkaTemplate.send(topic, meetingUuid.toString(), body).whenComplete((result, exception) -> {
 				if (exception != null) {
 					log.error(
-							"Kafka meeting event send failed (retry/DLT on broker-consumer): eventType={} topic={} meetingUuid={}",
+							"Kafka meeting event send failed: eventType={} topic={} meetingUuid={}",
 							eventType,
 							topic,
-							meetingUuid
+							meetingUuid,
+							exception
 					);
 					return;
 				}
@@ -67,7 +98,13 @@ public class KafkaMeetingEventPublisher {
 			});
 		}
 		catch (RuntimeException exception) {
-			log.error("Kafka meeting event send threw: eventType={} topic={} meetingUuid={}", eventType, topic, meetingUuid);
+			log.error(
+					"Kafka meeting event send threw: eventType={} topic={} meetingUuid={}",
+					eventType,
+					topic,
+					meetingUuid,
+					exception
+			);
 		}
 	}
 }
