@@ -9,13 +9,15 @@ import com.planwith.planwith_fo_meeting.config.DeployProperties;
 import com.planwith.planwith_fo_meeting.config.GatewayTrustProperties;
 import com.planwith.planwith_fo_meeting.config.LocalDotenvLoader;
 import com.planwith.planwith_fo_meeting.config.MeetingKafkaProperties;
+import com.planwith.planwith_fo_meeting.config.ScheduleClientProperties;
 
 @SpringBootApplication
 @EnableConfigurationProperties({
 		AuthProperties.class,
 		DeployProperties.class,
 		GatewayTrustProperties.class,
-		MeetingKafkaProperties.class
+		MeetingKafkaProperties.class,
+		ScheduleClientProperties.class
 })
 public class PlanwithFoMeetingApplication {
 

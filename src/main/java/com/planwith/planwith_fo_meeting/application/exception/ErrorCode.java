@@ -12,6 +12,7 @@ public enum ErrorCode {
 	SCHEDULE_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE_REQUIRED", "일정이 없으면 모임을 만들 수 없습니다."),
 	SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "SCHEDULE_NOT_FOUND", "일정을 찾을 수 없습니다."),
 	INVALID_COVER_IMAGE(HttpStatus.BAD_REQUEST, "INVALID_COVER_IMAGE", "대표 이미지 형식이 올바르지 않습니다."),
+	COVER_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "COVER_IMAGE_NOT_FOUND", "대표 이미지를 찾을 수 없습니다."),
 	NOT_MEETING_HOST(HttpStatus.FORBIDDEN, "NOT_MEETING_HOST", "방장만 수행할 수 있습니다."),
 	ALREADY_APPLIED(HttpStatus.CONFLICT, "ALREADY_APPLIED", "이미 신청한 모임입니다."),
 	ALREADY_PARTICIPATING(HttpStatus.CONFLICT, "ALREADY_PARTICIPATING", "이미 참여 중인 모임입니다."),

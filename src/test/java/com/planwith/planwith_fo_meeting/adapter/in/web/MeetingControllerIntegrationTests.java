@@ -3,8 +3,16 @@ package com.planwith.planwith_fo_meeting.adapter.in.web;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+
+import javax.imageio.ImageIO;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,19 +97,78 @@ class MeetingControllerIntegrationTests {
 	}
 
 	@Test
-	void uploadCoverImageStoresStubUrl() throws Exception {
+	void uploadCoverImageStoresAndServesBytes() throws Exception {
 		String meetingUuid = createMeeting(HOST_UUID);
+		byte[] webp = {1, 2, 3, 4};
 		MockMultipartFile file = new MockMultipartFile(
 				"file",
 				"cover.webp",
 				"image/webp",
-				new byte[] {1, 2, 3, 4}
+				webp
 		);
 		mockMvc.perform(multipart("/api/v1/meetings/{meetingUuid}/cover-image", meetingUuid)
 						.file(file)
 						.header("X-Auth-User-Id", HOST_UUID))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.data.coverImage").value("stub://meetings/" + meetingUuid + ".webp"));
+				.andExpect(jsonPath("$.data.coverImage").value("/api/v1/meetings/" + meetingUuid + "/cover-image"));
+		mockMvc.perform(get("/api/v1/meetings/{meetingUuid}/cover-image", meetingUuid))
+				.andExpect(status().isOk())
+				.andExpect(header().string("Content-Type", "image/webp"))
+				.andExpect(content().bytes(webp));
+	}
+
+	@Test
+	void uploadCoverJpegStoresAndServesBytes() throws Exception {
+		String meetingUuid = createMeeting(HOST_UUID);
+		byte[] jpeg = jpegBytes();
+		MockMultipartFile file = new MockMultipartFile(
+				"file",
+				"cover.jpg",
+				"image/jpeg",
+				jpeg
+		);
+		mockMvc.perform(multipart("/api/v1/meetings/{meetingUuid}/cover-image", meetingUuid)
+						.file(file)
+						.header("X-Auth-User-Id", HOST_UUID))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.coverImage").value("/api/v1/meetings/" + meetingUuid + "/cover-image"));
+		mockMvc.perform(get("/api/v1/meetings/{meetingUuid}/cover-image", meetingUuid))
+				.andExpect(status().isOk())
+				.andExpect(header().string("Content-Type", "image/jpeg"))
+				.andExpect(content().bytes(jpeg));
+	}
+
+	@Test
+	void missingCoverImageIsNotFound() throws Exception {
+		String meetingUuid = createMeeting(HOST_UUID);
+		mockMvc.perform(get("/api/v1/meetings/{meetingUuid}/cover-image", meetingUuid))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.error.code").value("COVER_IMAGE_NOT_FOUND"));
+	}
+
+	@Test
+	void uploadCoverCorruptJpegIsBadRequest() throws Exception {
+		String meetingUuid = createMeeting(HOST_UUID);
+		MockMultipartFile file = new MockMultipartFile(
+				"file",
+				"cover.jpg",
+				"image/jpeg",
+				new byte[] {(byte) 0xFF, (byte) 0xD8, 0x00, 0x01}
+		);
+		mockMvc.perform(multipart("/api/v1/meetings/{meetingUuid}/cover-image", meetingUuid)
+						.file(file)
+						.header("X-Auth-User-Id", HOST_UUID))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.error.code").value("INVALID_COVER_IMAGE"));
+	}
+
+	@Test
+	void uploadCoverMissingFileIsBadRequest() throws Exception {
+		String meetingUuid = createMeeting(HOST_UUID);
+		mockMvc.perform(multipart("/api/v1/meetings/{meetingUuid}/cover-image", meetingUuid)
+						.header("X-Auth-User-Id", HOST_UUID))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.error.code").value("INVALID_COVER_IMAGE"));
 	}
 
 	@Test
@@ -166,11 +233,13 @@ class MeetingControllerIntegrationTests {
 				.andExpect(jsonPath("$.data.canApply").value(false))
 				.andExpect(jsonPath("$.data.canEnterChat").value(true))
 				.andExpect(jsonPath("$.data.canViewMembers").value(true))
+				.andExpect(jsonPath("$.data.destination").value("부산"))
+				.andExpect(jsonPath("$.data.startDate").value("2026-09-01"))
+				.andExpect(jsonPath("$.data.endDate").value("2026-09-03"))
 				.andExpect(jsonPath("$.data.startAt").doesNotExist())
 				.andExpect(jsonPath("$.data.endAt").doesNotExist())
 				.andExpect(jsonPath("$.data.cost").doesNotExist())
-				.andExpect(jsonPath("$.data.transport").doesNotExist())
-				.andExpect(jsonPath("$.data.destination").doesNotExist());
+				.andExpect(jsonPath("$.data.transport").doesNotExist());
 	}
 
 	@Test
@@ -241,6 +310,17 @@ class MeetingControllerIntegrationTests {
 		mockMvc.perform(get("/api/v1/meetings/me").param("scope", "all").header("X-Auth-User-Id", HOST_UUID))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"));
+	}
+
+	private byte[] jpegBytes() throws Exception {
+		BufferedImage image = new BufferedImage(8, 8, BufferedImage.TYPE_INT_RGB);
+		var graphics = image.createGraphics();
+		graphics.setColor(Color.BLUE);
+		graphics.fillRect(0, 0, 8, 8);
+		graphics.dispose();
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		ImageIO.write(image, "jpeg", output);
+		return output.toByteArray();
 	}
 
 	private String createMeeting(String hostUuid) throws Exception {
