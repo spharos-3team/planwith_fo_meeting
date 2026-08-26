@@ -23,19 +23,20 @@ spring:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:127.0.0.1:9092}
     producer:
       acks: all
-      retries: 1
+      retries: 3
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       properties:
-        max.block.ms: 500
-        request.timeout.ms: 500
-        delivery.timeout.ms: 1500
-        socket.connection.setup.timeout.ms: 500
+        # Local NoOp never sends. Docker/KRaft topic auto-create needs more than 500ms.
+        max.block.ms: ${KAFKA_MAX_BLOCK_MS:30000}
+        request.timeout.ms: ${KAFKA_REQUEST_TIMEOUT_MS:20000}
+        delivery.timeout.ms: ${KAFKA_DELIVERY_TIMEOUT_MS:40000}
+        socket.connection.setup.timeout.ms: ${KAFKA_SOCKET_TIMEOUT_MS:10000}
     admin:
       fail-fast: false
       properties:
-        request.timeout.ms: 500
-        default.api.timeout.ms: 500
+        request.timeout.ms: ${KAFKA_ADMIN_TIMEOUT_MS:20000}
+        default.api.timeout.ms: ${KAFKA_ADMIN_TIMEOUT_MS:20000}
     listener:
       auto-startup: false
   lifecycle:
