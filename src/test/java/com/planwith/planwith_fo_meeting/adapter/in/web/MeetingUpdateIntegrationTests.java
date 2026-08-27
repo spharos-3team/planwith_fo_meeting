@@ -6,6 +6,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -198,6 +200,45 @@ class MeetingUpdateIntegrationTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.content[0].meetingUuid").value(older))
 				.andExpect(jsonPath("$.data.content[1].meetingUuid").value(newer));
+	}
+
+	@Test
+	void newestCreatedMeetingAppearsFirstWhenNoneBumped() throws Exception {
+		String older = createMeeting(HOST_UUID);
+		Meeting found = meetingRepositoryPort.findByMeetingUuid(UUID.fromString(older)).orElseThrow();
+		meetingRepositoryPort.save(new Meeting(
+				found.getMeetingId(),
+				found.getMeetingUuid(),
+				found.getHostMemberUuid(),
+				found.getScheduleUuid(),
+				found.getTitle(),
+				found.getDescription(),
+				found.getMaxMemberCount(),
+				found.getCurrentMemberCount(),
+				found.getStatus(),
+				found.getThumbnailUrl(),
+				found.getBumpAt(),
+				found.getScheduleSnapshot(),
+				found.getCreatedAt().minusSeconds(2),
+				found.getUpdatedAt()
+		));
+		String newer = createMeeting(HOST_UUID);
+		mockMvc.perform(get("/api/v1/meetings"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.content[0].meetingUuid").value(newer))
+				.andExpect(jsonPath("$.data.content[1].meetingUuid").value(older));
+	}
+
+	@Test
+	void newlyCreatedMeetingAppearsBeforeOlderBumpedMeeting() throws Exception {
+		String older = createMeeting(HOST_UUID);
+		Meeting bumped = meetingRepositoryPort.findByMeetingUuid(UUID.fromString(older)).orElseThrow();
+		meetingRepositoryPort.save(bumped.bump(Instant.now().minus(Duration.ofDays(7))));
+		String newer = createMeeting(HOST_UUID);
+		mockMvc.perform(get("/api/v1/meetings"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.content[0].meetingUuid").value(newer))
+				.andExpect(jsonPath("$.data.content[1].meetingUuid").value(older));
 	}
 
 	private String createMeeting(String hostUuid) throws Exception {

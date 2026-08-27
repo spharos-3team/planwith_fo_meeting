@@ -23,7 +23,7 @@ public interface MeetingJpaRepository extends JpaRepository<MeetingJpaEntity, Lo
 			        or :status is null and m.meetingStatus <> com.planwith.planwith_fo_meeting.domain.meeting.MeetingStatus.COMPLETED
 			      )
 			order by case when m.meetingStatus = com.planwith.planwith_fo_meeting.domain.meeting.MeetingStatus.FULL then 1 else 0 end,
-			         m.bumpAt desc nulls last,
+			         coalesce(m.bumpAt, m.createdAt) desc,
 			         m.createdAt desc
 			""")
 	Page<MeetingJpaEntity> searchPublic(@Param("status") MeetingStatus status, Pageable pageable);
@@ -34,7 +34,7 @@ public interface MeetingJpaRepository extends JpaRepository<MeetingJpaEntity, Lo
 			  and m.meetingStatus <> com.planwith.planwith_fo_meeting.domain.meeting.MeetingStatus.DISBANDED
 			  and (:status is null or m.meetingStatus = :status)
 			order by case when m.meetingStatus = com.planwith.planwith_fo_meeting.domain.meeting.MeetingStatus.FULL then 1 else 0 end,
-			         m.bumpAt desc nulls last,
+			         coalesce(m.bumpAt, m.createdAt) desc,
 			         m.createdAt desc
 			""")
 	Page<MeetingJpaEntity> searchHosted(
@@ -53,7 +53,7 @@ public interface MeetingJpaRepository extends JpaRepository<MeetingJpaEntity, Lo
 			  and m.meetingStatus <> com.planwith.planwith_fo_meeting.domain.meeting.MeetingStatus.DISBANDED
 			  and (:status is null or m.meetingStatus = :status)
 			order by case when m.meetingStatus = com.planwith.planwith_fo_meeting.domain.meeting.MeetingStatus.FULL then 1 else 0 end,
-			         m.bumpAt desc nulls last,
+			         coalesce(m.bumpAt, m.createdAt) desc,
 			         m.createdAt desc
 			""")
 	Page<MeetingJpaEntity> searchByParticipation(
